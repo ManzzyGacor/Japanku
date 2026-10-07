@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Daftar — VaresaJasher</title>
+  <meta name="theme-color" content="#171226">
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/auth.css">
+</head>
+<body>
+  <main class="auth-card">
+    <a class="brand" href="/" aria-label="VaresaJasher">
+      <span class="brand-mark">VJ</span>
+      <span class="brand-name">Varesa<b>Jasher</b></span>
+    </a>
+
+    <h1>Buat akun VaresaJasher</h1>
+    <p class="auth-sub">Sudah punya akun? <a href="/login">Masuk</a></p>
+
+    <div class="alert alert-error" id="authError" role="alert" hidden></div>
+
+    <form id="authForm" data-mode="register" novalidate>
+      <div class="field">
+        <label for="name">Nama</label>
+        <input class="input" id="name" name="name" type="text" autocomplete="name" required minlength="2" maxlength="60" placeholder="Nama kamu">
+      </div>
+      <div class="field">
+        <label for="email">Email</label>
+        <input class="input" id="email" name="email" type="email" autocomplete="email" required placeholder="kamu@email.com">
+      </div>
+      <div class="field">
+        <label for="password">Kata sandi</label>
+        <div class="pass-wrap">
+          <input class="input" id="password" name="password" type="password" autocomplete="new-password" required minlength="8" placeholder="Minimal 8 karakter">
+          <button type="button" class="pass-toggle" data-toggle="password">Lihat</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="password2">Ulangi kata sandi</label>
+        <input class="input" id="password2" name="password2" type="password" autocomplete="new-password" required minlength="8" placeholder="Ketik ulang kata sandi">
+      </div>
+      <label class="check" for="tos">
+        <input type="checkbox" id="tos" name="tos" required>
+        <span>Saya paham bahwa pengiriman pesan massal bisa membuat nomor WhatsApp dibatasi, dan saya bertanggung jawab atas pesan yang dikirim bot saya.</span>
+      </label>
+      <button class="btn btn-primary btn-block btn-lg" type="submit" id="submitBtn">Buat akun</button>
+    </form>
+
+    <div id="googleBox" hidden>
+      <div class="divider">atau</div>
+      <div id="gsiButton" class="gsi-wrap"></div>
+    </div>
+  </main>
+
+  <p class="auth-foot">Kembali ke <a href="/">halaman utama</a></p>
+
+  <script type="module" src="/assets/js/auth.js"></script>
+</body>
+</html>

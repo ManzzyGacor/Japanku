@@ -1,0 +1,191 @@
+import fs from 'fs';
+import path from 'path';
+import Database from 'better-sqlite3';
+import { env } from './env.js';
+
+fs.mkdirSync(env.storageDir, { recursive: true });
+
+export const db = new Database(path.join(env.storageDir, 'varesajasher.sqlite'));
+db.pragma('journal_mode = WAL');
+db.pragma('foreign_keys = ON');
+db.pragma('busy_timeout = 5000');
+
+/**
+ * Skema database. Tiap elemen = satu versi migrasi; jangan ubah yang sudah ada,
+ * tambahkan elemen baru di akhir untuk perubahan berikutnya.
+ */
+const MIGRASI = [
+  `
+  CREATE TABLE users (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    name          TEXT    NOT NULL,
+    email         TEXT    NOT NULL UNIQUE COLLATE NOCASE,
+    password_hash TEXT,
+    google_sub    TEXT    UNIQUE,
+    role          TEXT    NOT NULL DEFAULT 'user',
+    balance       INTEGER NOT NULL DEFAULT 0,
+    banned        INTEGER NOT NULL DEFAULT 0,
+    created_at    INTEGER NOT NULL
+  );
+
+  CREATE TABLE sessions (
+    id         TEXT    PRIMARY KEY,
+    user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at INTEGER NOT NULL,
+    expires_at INTEGER NOT NULL,
+    ip         TEXT,
+    user_agent TEXT
+  );
+  CREATE INDEX idx_sessions_user ON sessions(user_id);
+
+  CREATE TABLE packages (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    name        TEXT    NOT NULL,
+    description TEXT    NOT NULL DEFAULT '',
+    days        INTEGER NOT NULL,
+    price       INTEGER NOT NULL,
+    active      INTEGER NOT NULL DEFAULT 1,
+    sort        INTEGER NOT NULL DEFAULT 0,
+    created_at  INTEGER NOT NULL
+  );
+
+  CREATE TABLE servers (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id        INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name           TEXT    NOT NULL,
+    package_id     INTEGER REFERENCES packages(id) ON DELETE SET NULL,
+    phone          TEXT    UNIQUE,
+    enabled        INTEGER NOT NULL DEFAULT 0,
+    settings       TEXT    NOT NULL DEFAULT '{}',
+    expires_at     INTEGER NOT NULL,
+    created_at     INTEGER NOT NULL,
+    last_online_at INTEGER
+  );
+  CREATE INDEX idx_servers_user ON servers(user_id);
+
+  CREATE TABLE transactions (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    type          TEXT    NOT NULL,
+    amount        INTEGER NOT NULL,
+    balance_after INTEGER NOT NULL,
+    description   TEXT    NOT NULL DEFAULT '',
+    created_at    INTEGER NOT NULL
+  );
+  CREATE INDEX idx_transactions_user ON transactions(user_id);
+
+  CREATE TABLE topups (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id      INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    amount       INTEGER NOT NULL,
+    method       TEXT    NOT NULL DEFAULT '',
+    note         TEXT    NOT NULL DEFAULT '',
+    status       TEXT    NOT NULL DEFAULT 'pending',
+    admin_note   TEXT    NOT NULL DEFAULT '',
+    created_at   INTEGER NOT NULL,
+    processed_at INTEGER,
+    processed_by INTEGER REFERENCES users(id) ON DELETE SET NULL
+  );
+  CREATE INDEX idx_topups_status ON topups(status);
+
+  CREATE TABLE settings (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  );
+  `,
+];
+
+function migrasi() {
+  const versi = db.pragma('user_version', { simple: true });
+  for (let i = versi; i < MIGRASI.length; i += 1) {
+    db.transaction(() => {
+      db.exec(MIGRASI[i]);
+      db.pragma(`user_version = ${i + 1}`);
+    })();
+  }
+}
+
+/** Paket bawaan saat database masih kosong. Harga & durasi bisa diubah dari panel admin. */
+const PAKET_AWAL = [
+  { name: 'Mingguan', description: '1 server, 1 nomor WhatsApp, semua fitur JPM.', days: 7, price: 5000 },
+  { name: 'Bulanan', description: '1 server, 1 nomor WhatsApp, semua fitur JPM.', days: 30, price: 15000 },
+  { name: '3 Bulan', description: 'Lebih hemat untuk pemakaian jangka panjang.', days: 90, price: 40000 },
+];
+
+export const PENGATURAN_SITUS_AWAL = {
+  payment_instructions:
+    'Transfer sesuai nominal ke salah satu rekening / e-wallet di bawah, lalu kirim permintaan top up. Saldo masuk setelah dicek admin.\n\nDANA / OVO / GoPay: 08xxxxxxxxxx a.n. Nama Kamu',
+  payment_qris_url: '',
+  contact_whatsapp: '',
+  min_topup: '5000',
+  announcement: '',
+};
+
+function benih() {
+  const sekarang = Date.now();
+
+  if (db.prepare('SELECT COUNT(*) AS n FROM packages').get().n === 0) {
+    const tambah = db.prepare(
+      'INSERT INTO packages (name, description, days, price, sort, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+    );
+    PAKET_AWAL.forEach((p, i) => tambah.run(p.name, p.description, p.days, p.price, i, sekarang));
+  }
+
+  const isi = db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)');
+  for (const [kunci, nilai] of Object.entries(PENGATURAN_SITUS_AWAL)) isi.run(kunci, nilai);
+}
+
+migrasi();
+benih();
+
+// ---------------------------------------------------------------------------
+// Pengaturan situs
+// ---------------------------------------------------------------------------
+
+export function semuaPengaturan() {
+  const hasil = { ...PENGATURAN_SITUS_AWAL };
+  for (const { key, value } of db.prepare('SELECT key, value FROM settings').all()) hasil[key] = value;
+  return hasil;
+}
+
+export function simpanPengaturan(data) {
+  const simpan = db.prepare(
+    'INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value',
+  );
+  db.transaction(() => {
+    for (const kunci of Object.keys(PENGATURAN_SITUS_AWAL)) {
+      if (data[kunci] !== undefined) simpan.run(kunci, String(data[kunci]));
+    }
+  })();
+}
+
+// ---------------------------------------------------------------------------
+// Saldo
+// ---------------------------------------------------------------------------
+
+export class SaldoKurang extends Error {
+  constructor() {
+    super('Saldo tidak cukup.');
+    this.status = 400;
+  }
+}
+
+/**
+ * Ubah saldo pengguna dan catat di riwayat transaksi.
+ * WAJIB dipanggil di dalam db.transaction() kalau digabung dengan perubahan lain.
+ * @returns {number} saldo setelah perubahan
+ */
+export function ubahSaldo(userId, jumlah, jenis, keterangan) {
+  const user = db.prepare('SELECT balance FROM users WHERE id = ?').get(userId);
+  if (!user) throw new Error('Pengguna tidak ditemukan.');
+
+  const saldoBaru = user.balance + jumlah;
+  if (saldoBaru < 0) throw new SaldoKurang();
+
+  db.prepare('UPDATE users SET balance = ? WHERE id = ?').run(saldoBaru, userId);
+  db.prepare(
+    'INSERT INTO transactions (user_id, type, amount, balance_after, description, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+  ).run(userId, jenis, jumlah, saldoBaru, keterangan, Date.now());
+
+  return saldoBaru;
+}
