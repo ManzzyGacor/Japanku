@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#16130F">
+  <title>Panduan &amp; Daftar Perintah Bot JPM — VaresaJasher</title>
+  <meta name="description" content="Cara menautkan nomor, menjalankan mode JPM, jeda aman supaya nomor tidak cepat dibatasi, daftar perintah chat, dan solusi masalah umum.">
+  <link rel="canonical" href="__BASE_URL__/panduan">
+  <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="VaresaJasher">
+  <meta property="og:locale" content="id_ID">
+  <meta property="og:title" content="Panduan & Daftar Perintah Bot JPM">
+  <meta property="og:description" content="Cara menautkan nomor, menjalankan mode JPM, jeda aman supaya nomor tidak cepat dibatasi, daftar perintah chat, dan solusi masalah umum.">
+  <meta property="og:url" content="__BASE_URL__/panduan">
+  <meta property="og:image" content="__BASE_URL__/assets/img/og/default.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="VaresaJasher — bot JPM & jasher WhatsApp yang jalan 24 jam">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..100,400..900&family=IBM+Plex+Mono:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&display=swap">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/landing.css">
+  <style>
+    .laman-kepala { padding: 52px 0 10px; }
+    .laman-kepala .kicker { margin-bottom: 14px; }
+    .laman-kepala h1 { font-size: clamp(40px, 7vw, 72px); }
+    .laman-kepala .lead { margin-top: 18px; max-width: 48ch; }
+
+    .pandu-nav { position: sticky; top: 0; z-index: 10; background: var(--kertas); border-top: var(--tipis) solid var(--tinta); border-bottom: var(--tipis) solid var(--tinta); margin-top: 32px; }
+    .pandu-nav ul { list-style: none; display: flex; gap: 8px; overflow-x: auto; padding: 10px 0; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    .pandu-nav ul::-webkit-scrollbar { display: none; }
+    .pandu-nav a { flex-shrink: 0; display: inline-flex; align-items: center; min-height: 40px; padding: 8px 14px; border: var(--tipis) solid var(--tinta); font-stretch: 80%; font-weight: 800; font-size: 13.5px; text-transform: uppercase; letter-spacing: .03em; text-decoration: none; background: var(--kertas-terang); white-space: nowrap; }
+    .pandu-nav a:hover { background: var(--sinyal-pucat); }
+
+    .pandu-seksi { padding-top: 52px; scroll-margin-top: 64px; }
+    .pandu-seksi > h2 { font-family: var(--f-poster); font-stretch: 62%; font-weight: 900; font-size: clamp(30px, 4.6vw, 48px); text-transform: uppercase; line-height: .9; }
+    .pandu-seksi > .kicker { margin-bottom: 8px; }
+    .pandu-seksi > p { margin-top: 14px; font-size: 16px; line-height: 1.6; color: var(--tinta-2); max-width: 64ch; }
+    .pandu-seksi > p b { color: var(--tinta); font-weight: 600; }
+    .pandu-seksi a { color: var(--tinta); font-weight: 600; text-underline-offset: 3px; }
+
+    .pandu-list { counter-reset: p; list-style: none; margin-top: 20px; }
+    .pandu-list > li { counter-increment: p; display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 14px; padding: 12px 0; border-bottom: 1.5px solid var(--garis-halus); font-size: 15.5px; line-height: 1.6; }
+    .pandu-list > li:last-child { border-bottom: 0; }
+    .pandu-list > li::before { content: counter(p); grid-row: 1 / 99; width: 38px; height: 38px; display: grid; place-items: center; border: var(--tipis) solid var(--tinta); background: var(--kertas-terang); font-family: var(--f-poster); font-stretch: 62%; font-weight: 900; font-size: 20px; }
+    .pandu-list b { color: var(--tinta); }
+    .pandu-list ul { list-style: none; margin: 8px 0 0; }
+    .pandu-list ul li { position: relative; padding-left: 16px; margin-top: 4px; color: var(--tinta-2); }
+    .pandu-list ul li::before { content: "—"; position: absolute; left: 0; color: var(--tinta-3); }
+
+    .menu-jalur { font-family: var(--f-mesin); font-size: 13px; background: var(--kertas-gelap); padding: 1px 6px; white-space: nowrap; }
+    .blok-sub { margin-top: 22px; }
+    .blok-sub h3 { font-stretch: 80%; font-weight: 800; font-size: 19px; text-transform: uppercase; letter-spacing: .01em; }
+    .blok-sub p { margin-top: 10px; font-size: 15.5px; line-height: 1.6; color: var(--tinta-2); max-width: 64ch; }
+    .blok-sub ul { list-style: none; margin-top: 10px; }
+    .blok-sub ul li { position: relative; padding-left: 18px; margin-top: 6px; font-size: 15.5px; line-height: 1.55; color: var(--tinta-2); }
+    .blok-sub ul li::before { content: "—"; position: absolute; left: 0; color: var(--tinta-3); }
+    .blok-sub b { color: var(--tinta); }
+
+    /* Kartu mode */
+    .mode-list { list-style: none; margin-top: 22px; display: grid; gap: 20px; }
+    .mode-kartu { border: var(--tebal) solid var(--tinta); box-shadow: var(--bayang-m); background: var(--kertas-terang); scroll-margin-top: 64px; }
+    .mode-kartu .kop { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 16px 20px; border-bottom: var(--tipis) solid var(--tinta); }
+    .mode-kartu .no { font-family: var(--f-poster); font-stretch: 62%; font-weight: 900; font-size: 34px; line-height: .8; color: transparent; -webkit-text-stroke: 2px var(--tinta); }
+    .mode-kartu.nyala .no { color: var(--sinyal); -webkit-text-stroke: 2px var(--tinta); }
+    .mode-kartu .nama { font-stretch: 75%; font-weight: 800; font-size: 20px; text-transform: uppercase; letter-spacing: .01em; }
+    .mode-kartu .kop .perintah { margin-left: auto; }
+    .mode-kartu .chip-segera { margin-left: auto; margin-top: 0; }
+    .mode-kartu .isi { padding: 16px 20px 20px; }
+    .mode-kartu .baris { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 6px 16px; padding: 8px 0; border-bottom: 1.5px solid var(--garis-halus); font-size: 15px; line-height: 1.55; }
+    .mode-kartu .baris:last-child { border-bottom: 0; }
+    .mode-kartu .baris .k { font-family: var(--f-mesin); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--tinta-3); padding-top: 3px; }
+    .mode-kartu .baris .v { color: var(--tinta-2); }
+    .mode-kartu .baris .v b { color: var(--tinta); }
+    .mode-kartu .baris .v code { font-family: var(--f-mesin); font-size: 13px; background: var(--kertas-gelap); padding: 1px 5px; }
+
+    /* Tabel geser (jeda aman + daftar perintah) */
+    .tbl-gulir { overflow-x: auto; border: var(--tebal) solid var(--tinta); box-shadow: var(--bayang-m); background: var(--kertas-terang); margin-top: 20px; -webkit-overflow-scrolling: touch; }
+    .tbl { width: 100%; min-width: 620px; border-collapse: collapse; }
+    .tbl th, .tbl td { padding: 11px 14px; text-align: left; border-bottom: 1.5px solid var(--garis-halus); vertical-align: top; font-size: 14px; line-height: 1.5; }
+    .tbl thead th { background: var(--tinta); color: var(--kertas); font-family: var(--f-mesin); font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; border-bottom: var(--tebal) solid var(--tinta); }
+    .tbl tbody tr:last-child td { border-bottom: 0; }
+    .tbl td.cmd, .tbl td.num { font-family: var(--f-mesin); font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .tbl td.cmd b { color: var(--tinta); }
+    .tbl .perintah { white-space: nowrap; }
+    .tbl-hint { display: none; }
+
+    /* Masalah umum */
+    .masalah { list-style: none; margin-top: 20px; border-top: var(--tebal) solid var(--tinta); }
+    .masalah > div { padding: 14px 0; border-bottom: 1.5px solid var(--garis-halus); }
+    .masalah dt { font-stretch: 80%; font-weight: 800; font-size: 15.5px; text-transform: none; letter-spacing: 0; }
+    .masalah dd { margin-top: 6px; font-size: 15px; line-height: 1.55; color: var(--tinta-2); }
+    .masalah dd a { color: var(--tinta); font-weight: 600; }
+
+    .catatan-blok { margin-top: 20px; }
+    .pandu-akhir { margin-top: 34px; font-size: 16px; }
+    .pandu-akhir a { color: var(--tinta); font-weight: 600; }
+
+    @media (max-width: 760px) {
+      .laman-kepala { padding: 30px 0 4px; }
+      .pandu-seksi { padding-top: 40px; }
+      .mode-kartu .baris { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+      .mode-kartu .baris .k { padding-top: 0; }
+      .tbl-hint { display: block; font-family: var(--f-mesin); font-size: 12px; color: var(--tinta-3); margin: 18px 0 -6px; letter-spacing: .04em; }
+    }
+    @media (prefers-reduced-motion: reduce) { .pandu-nav { position: static; } }
+  </style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-panah" viewBox="0 0 24 24"><path d="M4 12h15M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-silang" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-perisai" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></symbol>
+</svg>
+
+<div class="masthead"><div class="wrap masthead-in">
+  <span id="dateline">Edisi 07.10.2026</span>
+  <span class="hide-m">Pusat siaran JPM &amp; jasher WhatsApp</span>
+  <span class="onair" id="onair" hidden></span>
+</div></div>
+
+<header class="nav"><div class="wrap nav-in">
+  <a class="merek" href="/" aria-label="VaresaJasher, beranda">
+    <span class="merek-tanda" aria-hidden="true">VJ</span>
+    <span class="merek-teks"><span class="merek-nama">Varesa<b>Jasher</b></span><span class="merek-sub">Pusat siaran JPM</span></span>
+  </a>
+  <nav class="nav-tautan" aria-label="Navigasi utama">
+    <a href="/#mode">Fitur</a><a href="/harga">Harga</a><a href="/panduan" class="aktif" aria-current="page">Panduan</a><a href="/faq">FAQ</a>
+  </nav>
+  <div class="nav-aksi" id="navAksi">
+    <a class="btn btn-sekunder btn-s" href="/masuk">Masuk</a>
+    <a class="btn btn-utama btn-s" href="/daftar">Daftar</a>
+  </div>
+  <button class="btn btn-sekunder btn-s btn-ikon nav-menu" id="navMenu" aria-expanded="false" aria-controls="navSheet" aria-label="Buka menu"><svg class="i"><use href="#i-menu"/></svg></button>
+</div></header>
+
+<div class="nav-sheet" id="navSheet" hidden>
+  <div class="nav-sheet-atas">
+    <a class="merek" href="/" aria-label="VaresaJasher, beranda"><span class="merek-tanda" aria-hidden="true">VJ</span><span class="merek-teks"><span class="merek-nama">Varesa<b>Jasher</b></span></span></a>
+    <button class="btn btn-sekunder btn-s btn-ikon" id="navTutup" aria-label="Tutup menu"><svg class="i"><use href="#i-silang"/></svg></button>
+  </div>
+  <nav class="nav-sheet-tautan" aria-label="Navigasi utama">
+    <a href="/#mode">Fitur</a><a href="/harga">Harga</a><a href="/panduan" class="aktif" aria-current="page">Panduan</a><a href="/faq">FAQ</a>
+  </nav>
+  <div class="nav-sheet-aksi" id="navSheetAksi">
+    <a class="btn btn-sekunder btn-l" href="/masuk">Masuk</a>
+    <a class="btn btn-utama btn-l" href="/daftar">Daftar gratis</a>
+  </div>
+</div>
+
+<main>
+<section class="seksi laman-kepala"><div class="wrap">
+  <p class="kicker">Panduan</p>
+  <h1 class="poster">Panduan VaresaJasher</h1>
+  <p class="lead">Dari akun baru sampai Auto JPM jalan sendiri. Baca bagian yang kamu perlukan saja.</p>
+</div></section>
+
+<nav class="pandu-nav" aria-label="Daftar isi"><div class="wrap"><ul>
+  <li><a href="#mulai">Mulai dalam 5 menit</a></li>
+  <li><a href="#tautkan-nomor">Menautkan nomor</a></li>
+  <li><a href="#mode-jpm">Mode JPM</a></li>
+  <li><a href="#whitelist">Whitelist</a></li>
+  <li><a href="#perintah">Daftar perintah chat</a></li>
+  <li><a href="#masalah">Masalah umum</a></li>
+</ul></div></nav>
+
+<div class="wrap">
+
+<!-- MULAI -->
+<section class="pandu-seksi" id="mulai">
+  <p class="kicker">Langkah awal</p>
+  <h2 class="poster">Mulai dalam 5 menit</h2>
+  <ol class="pandu-list">
+    <li><span><b>Buat akun.</b> <a href="/daftar">Daftar</a> pakai email atau akun Google.</span></li>
+    <li><span><b>Buat server.</b> Buka <b>Beli server</b>. Pilih <b>Uji Sinyal</b> (trial gratis, 24 jam, sekali per akun) atau isi saldo lewat QRIS lalu pilih Antena, Menara, atau Satelit.</span></li>
+    <li><span><b>Tautkan nomor.</b> Di halaman server, masukkan nomor WhatsApp yang mau dijadikan bot, lalu ikuti langkah di bawah. Sebaiknya pakai nomor khusus jualan.</span></li>
+    <li><span><b>Atur dulu sebelum kirim.</b> Buka <b>Pengaturan</b>: cek jeda antar grup (saran 15–30 detik). Buka <b>Whitelist</b>: masukkan grup yang tidak boleh dikirimi.</span></li>
+    <li><span><b>Kirim JPM pertama.</b> Buka <b>Meja kirim</b>, tulis pesan, pilih <b>JPM biasa</b>, lalu tekan <b>Mulai</b>. Hasilnya muncul di <b>Terminal</b>.</span></li>
+    <li><span><b>Pantau dan perpanjang.</b> Masa aktif tampil di halaman server. Perpanjang sebelum habis supaya bot tidak berhenti.</span></li>
+  </ol>
+</section>
+
+<!-- TAUTKAN NOMOR -->
+<section class="pandu-seksi" id="tautkan-nomor">
+  <p class="kicker">Pairing</p>
+  <h2 class="poster">Menautkan nomor WhatsApp</h2>
+  <div class="blok-sub">
+    <h3>Pakai kode pairing (disarankan)</h3>
+    <ol class="pandu-list">
+      <li><span>Di dashboard, buka server, masukkan nomor dengan format <b>62…</b> (contoh <span class="menu-jalur">6281234567890</span>), lalu pilih <b>Kode pairing</b>.</span></li>
+      <li><span>Kode 8 karakter muncul di dashboard.</span></li>
+      <li><span>Di HP yang nomornya mau dijadikan bot, buka WhatsApp:
+        <ul>
+          <li><b>Android:</b> ketuk ⋮ (titik tiga) › <span class="menu-jalur">Perangkat tertaut</span>.</li>
+          <li><b>iPhone:</b> buka <span class="menu-jalur">Setelan</span> › <span class="menu-jalur">Perangkat tertaut</span>.</li>
+        </ul></span></li>
+      <li><span>Ketuk <b>Tautkan perangkat</b>, lalu pilih <b>Tautkan dengan nomor telepon saja</b>.</span></li>
+      <li><span>Ketik kode dari dashboard. WhatsApp kadang juga mengirim notifikasi "masukkan kode" — mengetuknya langsung membuka kolom yang sama.</span></li>
+      <li><span>Tunggu sampai status server berubah menjadi <b>Terhubung</b>.</span></li>
+    </ol>
+  </div>
+  <div class="blok-sub">
+    <h3>Pakai QR</h3>
+    <p>Pilih <b>Scan QR</b> di dashboard, lalu di HP buka <span class="menu-jalur">Perangkat tertaut</span> › <span class="menu-jalur">Tautkan perangkat</span> dan arahkan kamera ke QR. QR harus dipindai dari HP lain, jadi kalau dashboard kamu buka di HP yang sama, pakai kode pairing.</p>
+  </div>
+  <div class="blok-sub">
+    <h3>Perlu diingat</h3>
+    <ul>
+      <li>Kode pairing dan QR hanya berlaku sebentar. Kalau kedaluwarsa, kode baru dibuat otomatis. Kalau beberapa menit tidak dipakai, prosesnya dibatalkan — tekan <b>Tautkan</b> lagi.</li>
+      <li>Satu nomor hanya bisa tertaut ke satu server. Kalau nomor sedang dipakai di server lain, putuskan dulu di sana.</li>
+      <li>Buka WhatsApp di HP minimal sekali tiap 14 hari, supaya WhatsApp tidak mengeluarkan perangkat tertaut.</li>
+      <li>Kalau kamu menghapus "VaresaJasher" dari daftar Perangkat tertaut di HP, bot langsung terputus dan nomor harus ditautkan ulang.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- MODE JPM -->
+<section class="pandu-seksi" id="mode-jpm">
+  <p class="kicker">Cara menyebar</p>
+  <h2 class="poster">Mode JPM</h2>
+  <p>Empat mode siap pakai, satu lagi (JPM SW Grup) segera menyusul. Semua mode bisa dijalankan dari <b>Meja kirim</b> di dashboard atau lewat perintah chat. Grup di whitelist selalu dilewati. Bot mengirim ke grup satu per satu sesuai <b>jeda antar grup</b>.</p>
+
+  <ol class="mode-list">
+    <li class="mode-kartu" id="jpm-biasa">
+      <div class="kop"><span class="no">01</span><span class="nama">JPM biasa</span><code class="perintah">.jpm</code></div>
+      <div class="isi">
+        <div class="baris"><span class="k">Apa</span><span class="v">Mengirim teks, atau gambar dengan teks, sekali ke semua grup sasaran.</span></div>
+        <div class="baris"><span class="k">Kapan</span><span class="v">Promo harian, pengumuman stok, atau saat kamu ingin mengontrol sendiri kapan pesan dikirim.</span></div>
+        <div class="baris"><span class="k">Dashboard</span><span class="v">Meja kirim › JPM biasa › tulis pesan (tambahkan gambar kalau perlu) › Mulai.</span></div>
+        <div class="baris"><span class="k">Chat</span><span class="v"><code>.jpm Open order hari ini!</code> Untuk JPM bergambar, kirim gambar dengan caption <code>.jpm pesan kamu</code>.</span></div>
+      </div>
+    </li>
+
+    <li class="mode-kartu" id="jpm-tag">
+      <div class="kop"><span class="no">02</span><span class="nama">JPM tag</span><code class="perintah">.jpmtag</code></div>
+      <div class="isi">
+        <div class="baris"><span class="k">Apa</span><span class="v">Sama seperti JPM biasa, tapi semua anggota grup ikut ter-tag secara tersembunyi (tidak ada daftar nama panjang di pesan).</span></div>
+        <div class="baris"><span class="k">Kapan</span><span class="v">Info yang benar-benar penting. Tag massal paling sering membuat anggota kesal dan melapor, jadi batasi maksimal sekali sehari per grup.</span></div>
+        <div class="baris"><span class="k">Chat</span><span class="v"><code>.jpmtag Info penting untuk semua member</code></span></div>
+      </div>
+    </li>
+
+    <li class="mode-kartu" id="auto-jpm">
+      <div class="kop"><span class="no">03</span><span class="nama">Auto JPM</span><code class="perintah">.autojpm</code></div>
+      <div class="isi">
+        <div class="baris"><span class="k">Apa</span><span class="v">Menyimpan satu atau beberapa postingan, lalu mengirimkannya ke semua grup secara berulang. Setiap grup menerima semua postingan berurutan, lalu bot pindah ke grup berikutnya. Setelah semua grup kebagian, bot menunggu sesuai <b>interval</b> (menit) sebelum putaran berikutnya.</span></div>
+        <div class="baris"><span class="k">Kapan</span><span class="v">Promosi rutin sepanjang hari tanpa harus kirim manual.</span></div>
+        <div class="baris"><span class="k">Dashboard</span><span class="v">Meja kirim › Auto JPM › tambah postingan › atur interval › Simpan &amp; mulai.</span></div>
+        <div class="baris"><span class="k">Chat</span><span class="v">Kirim atau teruskan postingannya ke chat bot, lalu kirim pesan baru <code>.autojpm</code> (bisa juga gambar dengan caption <code>.autojpm</code>). Jangan pakai <i>reply</i> untuk postingan bergambar — gambar dari pesan yang di-reply tidak bisa diambil.</span></div>
+        <div class="baris"><span class="k">Catatan</span><span class="v">Interval dihitung setelah satu putaran selesai. Kalau koneksi putus, Auto JPM dijeda dan lanjut otomatis setelah tersambung lagi.</span></div>
+      </div>
+    </li>
+
+    <li class="mode-kartu nyala" id="auto-jpm-channel">
+      <div class="kop"><span class="no">04</span><span class="nama">Auto JPM Channel</span><code class="perintah">.autojpm</code></div>
+      <div class="isi">
+        <div class="baris"><span class="k">Apa</span><span class="v">Mengambil postingan dari saluran (channel) WhatsApp kamu dan meneruskannya ke semua grup dengan label <b>Diteruskan dari saluran</b>, lalu mengulang sesuai interval. Anggota grup bisa mengetuk label itu untuk membuka dan mengikuti saluran kamu.</span></div>
+        <div class="baris"><span class="k">Kapan</span><span class="v">Kamu punya saluran WhatsApp dan ingin menambah pengikut, atau memperbarui katalog di saluran dan ingin grup ikut melihatnya.</span></div>
+        <div class="baris"><span class="k">Dashboard</span><span class="v">Meja kirim › Auto JPM Channel › tempel link saluran (atau teruskan postingan saluran ke chat bot) › atur interval › Simpan &amp; mulai.</span></div>
+        <div class="baris"><span class="k">Catatan</span><span class="v">Di paket Antena dan Menara, hanya satu tugas otomatis yang bisa berjalan. Hentikan Auto JPM dulu kalau ingin menjalankan Auto JPM Channel. Satelit bisa menjalankan keduanya sekaligus.</span></div>
+      </div>
+    </li>
+
+    <li class="mode-kartu" id="jpm-sw-grup">
+      <div class="kop"><span class="no">05</span><span class="nama">JPM SW Grup</span><span class="chip-segera">Segera</span></div>
+      <div class="isi">
+        <div class="baris"><span class="k">Apa</span><span class="v">Memasang postingan kamu sebagai <b>status grup</b> (SW grup) di tiap grup sasaran. Postingan muncul di lingkaran status grup, bukan sebagai chat biasa, jadi tidak menumpuk di obrolan.</span></div>
+        <div class="baris"><span class="k">Kapan</span><span class="v">Promosi yang lebih halus di grup yang ramai, atau sebagai pelengkap JPM biasa.</span></div>
+        <div class="baris"><span class="k">Status</span><span class="v">Mode ini sedang dalam pengerjaan dan belum aktif. Kami umumkan di dashboard begitu siap. Dukungannya juga mengikuti WhatsApp — kalau WhatsApp anggota grup belum mendukung status grup, mereka mungkin tidak melihatnya.</span></div>
+      </div>
+    </li>
+  </ol>
+</section>
+
+<!-- WHITELIST -->
+<section class="pandu-seksi" id="whitelist">
+  <p class="kicker">Grup yang dilewati</p>
+  <h2 class="poster">Whitelist</h2>
+  <p>Whitelist adalah daftar grup yang <b>dilindungi</b>: semua mode JPM dan autoreply akan <b>melewati</b> grup ini. Masukkan grup keluarga, kantor, sekolah, komunitas, dan grup yang aturannya melarang promosi.</p>
+  <div class="blok-sub">
+    <h3>Dari dashboard</h3>
+    <p>Buka server › Whitelist › centang grup › Simpan.</p>
+  </div>
+  <div class="blok-sub">
+    <h3>Dari chat</h3>
+    <ul>
+      <li><code class="perintah">.listgc</code> untuk melihat nomor urut grup;</li>
+      <li><code class="perintah">.addwhitelist 1,4,7</code> untuk menambahkan grup;</li>
+      <li><code class="perintah">.whitelist</code> untuk melihat daftar;</li>
+      <li><code class="perintah">.delwhitelist 2</code> atau <code class="perintah">.delwhitelist all</code> untuk menghapus.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- JEDA AMAN -->
+<section class="pandu-seksi" id="perintah">
+  <p class="kicker">Referensi</p>
+  <h2 class="poster">Daftar perintah chat</h2>
+  <p><b>Siapa yang bisa memerintah:</b> kirim perintah dari WhatsApp nomor bot itu sendiri (paling mudah lewat chat ke diri sendiri, "Message yourself") atau dari nomor <b>owner tambahan</b> yang diatur di Pengaturan. Awali perintah dengan prefix (bawaan <span class="menu-jalur">.</span> atau <span class="menu-jalur">#</span>), contoh <code class="perintah">.menu</code>. Pesan dari nomor lain diabaikan.</p>
+  <p class="tbl-hint">Geser tabel ke samping untuk lihat contohnya.</p>
+  <div class="tbl-gulir" tabindex="0" role="region" aria-label="Daftar perintah chat">
+    <table class="tbl">
+      <thead><tr><th scope="col">Perintah</th><th scope="col">Fungsi</th><th scope="col">Contoh</th></tr></thead>
+      <tbody>
+        <tr><td class="cmd"><b>menu</b></td><td>Menampilkan daftar perintah</td><td class="cmd">.menu</td></tr>
+        <tr><td class="cmd"><b>ping</b></td><td>Cek bot aktif</td><td class="cmd">.ping</td></tr>
+        <tr><td class="cmd"><b>listgc</b></td><td>Daftar grup beserta nomor urut, jumlah anggota, dan status terbuka/tertutup</td><td class="cmd">.listgc</td></tr>
+        <tr><td class="cmd"><b>jpm</b> &lt;pesan&gt;</td><td>JPM biasa (kirim bersama gambar untuk JPM bergambar)</td><td class="cmd">.jpm Open order hari ini!</td></tr>
+        <tr><td class="cmd"><b>jpmtag</b> &lt;pesan&gt;</td><td>JPM tag</td><td class="cmd">.jpmtag Info penting</td></tr>
+        <tr><td class="cmd"><b>autojpm</b></td><td>Simpan postingan yang baru kamu kirim/teruskan, lalu mulai Auto JPM</td><td class="cmd">.autojpm</td></tr>
+        <tr><td class="cmd"><b>autoreply</b> &lt;pesan&gt;</td><td>Balas otomatis ke grup yang sedang ramai (<span class="cmd">.autoreply stop</span> untuk mematikan)</td><td class="cmd">.autoreply Halo, cek katalog di bio ya</td></tr>
+        <tr><td class="cmd"><b>whitelist</b></td><td>Lihat grup yang dilewati</td><td class="cmd">.whitelist</td></tr>
+        <tr><td class="cmd"><b>addwhitelist</b> &lt;nomor&gt;</td><td>Tambah grup ke whitelist</td><td class="cmd">.addwhitelist 1,2,3</td></tr>
+        <tr><td class="cmd"><b>delwhitelist</b> &lt;nomor/all&gt;</td><td>Hapus dari whitelist</td><td class="cmd">.delwhitelist all</td></tr>
+        <tr><td class="cmd"><b>resetdata</b></td><td>Kosongkan whitelist, postingan Auto JPM, dan kumpulan link grup; hentikan semua tugas. Sesi login tidak dihapus. Konfirmasi dengan <span class="cmd">.resetdata ya</span>.</td><td class="cmd">.resetdata ya</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- MASALAH UMUM -->
+<section class="pandu-seksi" id="masalah">
+  <p class="kicker">Pemecahan masalah</p>
+  <h2 class="poster">Masalah umum dan solusinya</h2>
+  <dl class="masalah">
+    <div><dt>Kode pairing tidak muncul atau kedaluwarsa</dt><dd>Pastikan nomor ditulis dengan 62 dan tanpa spasi. Tunggu kode baru dibuat otomatis, atau tekan <b>Tautkan</b> lagi. Cek Terminal untuk pesan galat.</dd></div>
+    <div><dt>"Nomor sudah dipakai di server lain"</dt><dd>Satu nomor hanya untuk satu server. Buka server lama › <b>Putuskan nomor</b>, lalu tautkan di server baru.</dd></div>
+    <div><dt>"Nomor ini sudah pernah dipakai untuk trial"</dt><dd>Trial berlaku sekali per nomor. Pakai nomor lain untuk trial, atau pilih paket berbayar.</dd></div>
+    <div><dt>Bot tidak membalas perintah</dt><dd>Status harus Terhubung. Kirim dari nomor bot sendiri atau owner tambahan, dan pakai prefix (<code class="perintah">.menu</code>).</dd></div>
+    <div><dt>Pesan hanya terkirim ke sebagian grup</dt><dd>Cek grup yang hanya-admin, whitelist, dan batas grup paket kamu. Detail per grup ada di Terminal.</dd></div>
+    <div><dt>Status Terputus</dt><dd>Biasanya perangkat tertaut dihapus dari HP, atau HP tidak membuka WhatsApp lebih dari 14 hari. Tautkan ulang nomor.</dd></div>
+    <div><dt>Auto JPM berhenti sendiri</dt><dd>Kalau koneksi putus, Auto JPM dijeda dan lanjut otomatis setelah tersambung. Kalau masa aktif habis, perpanjang dulu.</dd></div>
+    <div><dt>Gambar tidak ikut terkirim di Auto JPM</dt><dd>Jangan pakai reply. Kirim gambarnya langsung dengan caption <code class="perintah">.autojpm</code>, atau kirim gambar lalu perintah sebagai pesan baru.</dd></div>
+    <div><dt>Nomor dibatasi atau diblokir WhatsApp</dt><dd>Hentikan semua tugas otomatis. Kami tidak bisa membuka blokir. Ajukan peninjauan lewat aplikasi WhatsApp. Sisa masa aktif bisa dipakai dengan nomor lain.</dd></div>
+    <div><dt>Sudah bayar QRIS, saldo belum masuk</dt><dd>Buka halaman tagihan untuk cek status dan jangan bayar ulang. Lewat 15 menit, hubungi <a href="/bantuan">Bantuan</a> dengan nomor tagihan dan bukti bayar.</dd></div>
+    <div><dt>Trial ditolak padahal belum pernah coba</dt><dd>Bisa terjadi di jaringan yang dipakai banyak orang. Hubungi <a href="/bantuan">Bantuan</a>, dan kami cek manual.</dd></div>
+  </dl>
+  <p class="pandu-akhir">Masih bingung? Lihat <a href="/faq">FAQ</a> atau <a href="/bantuan">hubungi kami</a>.</p>
+</section>
+
+</div>
+
+<!-- AJAKAN -->
+<section class="cta"><div class="wrap">
+  <div class="cta-panel">
+    <h2>Siap <mark>mulai siaran?</mark></h2>
+    <p>Buat akun gratis, tautkan nomor, dan kirim JPM pertama kamu dalam hitungan menit. Trial 24 jam, tanpa isi saldo.</p>
+    <div class="cta-aksi">
+      <a class="btn btn-utama btn-l" href="/daftar" data-paket="uji">Coba gratis 1 hari <svg class="i"><use href="#i-panah"/></svg></a>
+      <a class="btn btn-sekunder btn-l" href="/harga">Lihat harga</a>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="kaki"><div class="wrap">
+  <div class="kaki-atas">
+    <div class="kaki-merek">
+      <a class="merek" href="/" aria-label="VaresaJasher, beranda"><span class="merek-tanda" aria-hidden="true">VJ</span><span class="merek-teks"><span class="merek-nama">Varesa<b>Jasher</b></span></span></a>
+      <p>Bot JPM &amp; jasher WhatsApp yang jalan 24 jam, diatur dari web.</p>
+    </div>
+    <div class="kaki-kol">
+      <h4>Produk</h4>
+      <ul>
+        <li><a href="/#mode">Mode JPM</a></li>
+        <li><a href="/harga">Harga</a></li>
+        <li><a href="/panduan">Panduan</a></li>
+        <li><a href="/status">Status layanan</a></li>
+      </ul>
+    </div>
+    <div class="kaki-kol">
+      <h4>Bantuan</h4>
+      <ul>
+        <li><a href="/faq">FAQ</a></li>
+        <li><a href="/bantuan">Bantuan &amp; kontak</a></li>
+        <li><a href="/panduan#tautkan-nomor">Cara menautkan nomor</a></li>
+        <li><a href="/bantuan#lapor">Laporkan penyalahgunaan</a></li>
+      </ul>
+    </div>
+    <div class="kaki-kol">
+      <h4>Legal</h4>
+      <ul>
+        <li><a href="/syarat">Syarat &amp; Ketentuan</a></li>
+        <li><a href="/privasi">Kebijakan Privasi</a></li>
+        <li><a href="/syarat#pengembalian-dana">Pengembalian dana</a></li>
+      </ul>
+    </div>
+    <div class="kaki-kol">
+      <h4>Akun</h4>
+      <ul>
+        <li><a href="/masuk">Masuk</a></li>
+        <li><a href="/daftar">Daftar gratis</a></li>
+        <li><a href="/dashboard">Dashboard</a></li>
+      </ul>
+    </div>
+  </div>
+  <p class="kaki-sangkalan">VaresaJasher adalah layanan independen dan tidak berafiliasi dengan, didukung, atau disponsori oleh WhatsApp LLC maupun Meta Platforms, Inc. WhatsApp adalah merek dagang milik pemiliknya.</p>
+  <div class="kaki-bawah">
+    <span>&copy; <span id="tahun">2026</span> VaresaJasher · saudara JadiVaresa (varesa.mom)</span>
+    <span>Dikelola oleh <a href="https://www.instagram.com/manzz_wakeup" target="_blank" rel="noopener">@ManzzyID</a></span>
+  </div>
+</div></footer>
+
+<script type="module" src="/assets/js/halaman-publik.js"></script>
+</body>
+</html>

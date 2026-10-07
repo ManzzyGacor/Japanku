@@ -18,6 +18,11 @@ router.get('/packages', (_req, res) => {
   res.json({ success: true, packages: paket });
 });
 
+router.get('/publik/ringkasan', (_req, res) => {
+  const serverAktif = db.prepare('SELECT COUNT(*) AS n FROM servers WHERE phone IS NOT NULL AND expires_at > ?').get(Date.now()).n;
+  res.json({ success: true, serverAktif });
+});
+
 router.get('/site', (_req, res) => {
   const s = semuaPengaturan();
   res.json({

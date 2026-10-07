@@ -1,7 +1,9 @@
-/* Beranda VaresaJasher — "Pusat Siaran"
-   Dateline masthead, hitung siaran langsung, pita pengumuman, tukar tombol
-   Masuk/Daftar jadi Dashboard, menu seluler, ticker contoh (FIKTIF), dan
-   teaser harga dari /api/packages. Semua data pengguna lewat html``. */
+/* Halaman publik VaresaJasher — "Pusat Siaran"
+   Perilaku bersama untuk semua halaman statis (harga, faq, panduan, syarat,
+   privasi): dateline masthead, hitung siaran langsung, pita pengumuman, tukar
+   tombol Masuk/Daftar jadi Dashboard saat sudah login, menu seluler, buka
+   otomatis item <details> dari #anchor, dan daftar harga /harga dari
+   /api/packages. Semua data pengguna dirender lewat html`` (otomatis di-escape). */
 
 import { api, html, rupiah } from './lib.js';
 
@@ -24,7 +26,7 @@ if (elTahun) elTahun.textContent = String(new Date().getFullYear());
 
 /* -------------------------------------------------------------------------
    2. Hitung bot siaran langsung (opsional) — tampil hanya kalau >= 25.
-   Endpoint belum tentu ada; kalau gagal, bagian kanan masthead disembunyikan
+   Kalau endpoint tidak ada atau gagal, bagian kanan masthead tetap tersembunyi
    (tidak pernah menampilkan angka palsu).
    ------------------------------------------------------------------------- */
 (async function botSiaran() {
@@ -62,7 +64,7 @@ if (elTahun) elTahun.textContent = String(new Date().getFullYear());
 })();
 
 /* -------------------------------------------------------------------------
-   4. Tautan paket + status login
+   4. Tautan paket + status login (dipakai /harga dan tombol CTA)
    ------------------------------------------------------------------------- */
 let sudahLogin = false;
 
@@ -125,74 +127,61 @@ api('/auth/me')
 })();
 
 /* -------------------------------------------------------------------------
-   6. Ticker "Baru terkirim" — nama grup FIKTIF saja (contoh, bukan data nyata)
+   6. Buka otomatis item <details> kalau #id-nya dituju (deep link / nav jangkar)
    ------------------------------------------------------------------------- */
-(function ticker() {
-  const trek = document.getElementById('tickerTrek');
-  const wadah = document.getElementById('ticker');
-  if (!trek || !wadah) return;
-
-  const contoh = [
-    { nama: 'JB Akun ML Murah', jam: '09.42' },
-    { nama: 'Open Jasher 24 Jam', jam: '09.42' },
-    { nama: 'Lapak Pulsa & Kuota', jam: '09.43' },
-    { nama: 'Reseller Skincare JKT', jam: '09.43' },
-    { nama: 'Info Loker Bekasi', lewat: true },
-    { nama: 'Komunitas Dropship', jam: '09.44' },
-    { nama: 'Jual Beli HP Second', jam: '09.44' },
-    { nama: 'Promo Top Up FF', jam: '09.45' },
-  ];
-
-  const satuSet = contoh
-    .map((g) => html`<span>${g.nama} ${g.lewat ? html`<em class="lewat">dilewati</em>` : html`<em>✓ ${g.jam}</em>`}</span>`.s)
-    .join('');
-  // Digandakan agar gulirannya mulus (translateX(-50%))
-  trek.innerHTML = satuSet + satuSet;
-
-  // Jeda saat tidak terlihat atau saat disentuh pointer
-  let terlihat = true;
-  let diHover = false;
-  const perbarui = () => wadah.classList.toggle('diam', !terlihat || diHover);
-  if ('IntersectionObserver' in window) {
-    new IntersectionObserver((entri) => {
-      terlihat = entri[0].isIntersecting;
-      perbarui();
-    }).observe(wadah);
-  }
-  wadah.addEventListener('mouseenter', () => { diHover = true; perbarui(); });
-  wadah.addEventListener('mouseleave', () => { diHover = false; perbarui(); });
-})();
-
-/* -------------------------------------------------------------------------
-   7. Buka otomatis item FAQ kalau URL punya #id yang cocok
-   ------------------------------------------------------------------------- */
-(function faqDeepLink() {
-  const id = location.hash.slice(1);
-  if (!id) return;
-  const el = document.getElementById(id);
-  if (el && el.tagName === 'DETAILS') {
-    el.open = true;
+(function bukaDetailsDariHash() {
+  function buka(id) {
+    if (!id) return;
+    let el;
+    try {
+      el = document.getElementById(decodeURIComponent(id));
+    } catch {
+      el = document.getElementById(id);
+    }
+    if (!el) return;
+    // kalau target di dalam <details>, buka pembungkusnya juga
+    const bungkus = el.closest('details');
+    if (bungkus) bungkus.open = true;
+    if (el.tagName === 'DETAILS') el.open = true;
     el.scrollIntoView({ block: 'start' });
   }
+  buka(location.hash.slice(1));
+  window.addEventListener('hashchange', () => buka(location.hash.slice(1)));
+  // klik tautan jangkar di halaman yang sama -> buka <details> tujuan
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a[href^="#"]');
+    if (!a) return;
+    const id = a.getAttribute('href').slice(1);
+    if (!id) return;
+    const el = document.getElementById(id);
+    const bungkus = el?.closest('details') || (el?.tagName === 'DETAILS' ? el : null);
+    if (bungkus) bungkus.open = true;
+  });
 })();
 
 /* -------------------------------------------------------------------------
-   8. Teaser harga dari /api/packages
+   7. Daftar harga /harga dari /api/packages
+   Render hanya jika ada #daftarHarga di halaman.
    ------------------------------------------------------------------------- */
 const FITUR = {
   uji: ['Semua mode JPM', 'Hingga 20 grup per putaran', '1 postingan Auto JPM tersimpan', 'Berlaku 24 jam'],
-  antena: ['1 nomor WhatsApp', 'Semua mode JPM', 'Hingga 50 grup per putaran', '3 postingan Auto JPM tersimpan'],
-  menara: ['1 nomor WhatsApp', 'Semua mode JPM', 'Hingga 200 grup per putaran', '10 postingan Auto JPM tersimpan'],
+  antena: ['1 nomor WhatsApp', 'Semua mode JPM', 'Hingga 50 grup per putaran', '3 postingan Auto JPM tersimpan', '1 tugas otomatis berjalan'],
+  menara: ['1 nomor WhatsApp', 'Semua mode JPM', 'Hingga 200 grup per putaran', '10 postingan Auto JPM tersimpan', '1 tugas otomatis berjalan'],
   satelit: ['1 nomor WhatsApp', 'Semua mode JPM', 'Semua grup yang kamu ikuti', '30 postingan Auto JPM tersimpan', '2 tugas otomatis sekaligus'],
 };
 const FITUR_UMUM = ['1 nomor WhatsApp', 'Semua mode JPM', 'Kode pairing & QR', 'Terminal langsung & whitelist'];
+const TAGLINE = {
+  antena: 'Pas untuk mulai jualan dan lapak dengan puluhan grup.',
+  menara: 'Untuk kamu yang promosi setiap hari ke banyak grup.',
+  satelit: 'Kapasitas penuh untuk jasher yang serius.',
+};
 
 function kartuTiket(p, unggulan) {
-  // Larik berisi objek Raw (hasil html``) — html`` menyisipkannya apa adanya.
   const fitur = (FITUR[p.code] || FITUR_UMUM).map((f) => html`<li>${f}</li>`);
   const noTiket = `VJ-${String(p.days || 0).padStart(3, '0')}`;
   const cap = unggulan ? html`<div class="cap tiket-cap" aria-hidden="true">Paling<br>worth it</div>` : '';
-  const tagline = p.description ? html`<p class="tiket-tagline">${p.description}</p>` : '';
+  const taglineTeks = p.description || TAGLINE[p.code];
+  const tagline = taglineTeks ? html`<p class="tiket-tagline">${taglineTeks}</p>` : '';
   const hemat = unggulan ? html` · <b style="font-weight:700">paling hemat per grup</b>` : '';
   const tombolKelas = unggulan ? 'btn-tinta' : 'btn-sekunder';
   return html`
@@ -229,21 +218,21 @@ function kartuTiket(p, unggulan) {
       wadah.innerHTML = tiers.map((p) => kartuTiket(p, p.code === 'satelit')).join('');
     }
 
-    // Isi baris mikro di hero dengan harga Antena
-    const antena = daftar.find((p) => p.code === 'antena');
-    const heroMikro = document.getElementById('heroMikro');
-    if (antena && heroMikro) {
-      heroMikro.innerHTML = html`Gratis 24 jam untuk 1 server, tanpa isi saldo. Setelah itu mulai <b>${rupiah(antena.price)}</b>/bulan.`.s;
-    }
+    // Sinkronkan sel harga lain di halaman (tabel banding, teks inline) dengan API.
+    const peta = Object.fromEntries(daftar.map((p) => [p.code, p.price]));
+    document.querySelectorAll('[data-harga]').forEach((el) => {
+      const h = peta[el.dataset.harga];
+      if (h != null) el.textContent = el.dataset.harga === 'uji' ? (h ? rupiah(h) : 'Gratis') : rupiah(h);
+    });
 
-    // Pita trial
     if (slotTrial) {
       const hargaTrial = trial ? rupiah(trial.price) : 'Rp0';
+      const namaTrial = trial?.name || 'Uji Sinyal';
       slotTrial.innerHTML = html`
         <div class="pita-trial">
           <span class="cap-mini kuning">Gratis</span>
-          <div class="teks"><b>Belum yakin? Coba dulu 24 jam.</b><p>1 server gratis (${hargaTrial}) dengan semua mode JPM, hingga 20 grup per putaran — tanpa isi saldo. Berlaku sekali per akun dan sekali per nomor WhatsApp.</p></div>
-          <a class="btn btn-utama" data-paket="uji" href="/daftar">Coba gratis 1 hari</a>
+          <div class="teks"><b>${namaTrial} · 24 jam (${hargaTrial})</b><p>Coba 1 server dengan semua mode JPM, hingga 20 grup per putaran dan 1 postingan Auto JPM. Berlaku sekali per akun dan sekali per nomor WhatsApp.</p></div>
+          <a class="btn btn-utama" data-paket="uji" href="/daftar">Coba gratis</a>
         </div>`.s;
     }
 

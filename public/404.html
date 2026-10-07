@@ -2,24 +2,49 @@
 <html lang="id">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Halaman tidak ditemukan — VaresaJasher</title>
-  <meta name="theme-color" content="#171226">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#16130F">
+  <title>Halaman ini tidak terbit — VaresaJasher</title>
+  <meta name="robots" content="noindex, follow">
   <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..100,400..900&family=IBM+Plex+Mono:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&display=swap">
   <link rel="stylesheet" href="/assets/css/base.css">
-  <link rel="stylesheet" href="/assets/css/auth.css">
+  <link rel="stylesheet" href="/assets/css/landing.css">
 </head>
 <body>
-  <main class="auth-card" style="text-align:center">
-    <a class="brand" href="/" aria-label="VaresaJasher">
-      <span class="brand-mark">VJ</span>
-      <span class="brand-name">Varesa<b>Jasher</b></span>
-    </a>
-    <h1>Halaman tidak ditemukan</h1>
-    <p class="auth-sub">Link yang kamu buka mungkin salah ketik atau sudah dipindah.</p>
-    <a class="btn btn-primary btn-block" href="/dashboard">Ke dashboard</a>
-  </main>
-  <p class="auth-foot">Kembali ke <a href="/">halaman utama</a></p>
+
+<header class="nav"><div class="wrap nav-in">
+  <a class="merek" href="/" aria-label="VaresaJasher, beranda">
+    <span class="merek-tanda" aria-hidden="true">VJ</span>
+    <span class="merek-teks"><span class="merek-nama">Varesa<b>Jasher</b></span><span class="merek-sub">Pusat siaran JPM</span></span>
+  </a>
+  <div class="nav-aksi" style="margin-left:auto">
+    <a class="btn btn-sekunder btn-s" href="/masuk">Masuk</a>
+    <a class="btn btn-utama btn-s" href="/daftar">Daftar</a>
+  </div>
+</div></header>
+
+<main class="halaman-404"><div class="isi">
+  <p class="kode-404">Galat 404 · edisi tidak ditemukan</p>
+  <h1>Halaman ini tidak terbit</h1>
+  <div class="cap cap-tinta" aria-hidden="true">Hangus<small>404</small></div>
+  <p>Link yang kamu buka mungkin salah ketik, sudah dipindah, atau memang belum pernah terbit. Balik ke beranda, atau cek harga dan panduan.</p>
+  <div class="aksi">
+    <a class="btn btn-utama btn-l" href="/">Kembali ke beranda <svg class="i" aria-hidden="true" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:square"><path d="M4 12h15M13 6l6 6-6 6"/></svg></a>
+    <a class="btn btn-sekunder btn-l" href="/harga">Lihat harga</a>
+  </div>
+</div></main>
+
+<footer class="kaki"><div class="wrap">
+  <div class="kaki-bawah">
+    <span>&copy; <span id="tahun">2026</span> VaresaJasher · saudara JadiVaresa (varesa.mom)</span>
+    <span>Dikelola oleh <a href="https://www.instagram.com/manzz_wakeup" target="_blank" rel="noopener">@ManzzyID</a></span>
+  </div>
+</div></footer>
+
+<script>document.getElementById('tahun').textContent = new Date().getFullYear();</script>
 </body>
 </html>

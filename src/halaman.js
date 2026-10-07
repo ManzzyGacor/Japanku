@@ -55,10 +55,22 @@ export function pasangHalaman(app) {
     });
   }
 
-  // Halaman publik dengan path bersih
+  // Halaman publik dengan path bersih. Token __BASE_URL__ (di tag canonical/og)
+  // diganti alamat situs saat disajikan. Hasilnya di-cache per (berkas, asal).
+  const cacheHtml = new Map();
   for (const [rute, berkas] of Object.entries(HALAMAN)) {
     if (!halamanAda(berkas)) continue;
-    app.get(rute, (_req, res) => res.sendFile(path.join(PUBLIC, berkas)));
+    const lokasi = path.join(PUBLIC, berkas);
+    app.get(rute, (req, res) => {
+      const asal = asalSitus(req);
+      const kunci = `${berkas}|${asal}`;
+      let html = cacheHtml.get(kunci);
+      if (html === undefined) {
+        html = fs.readFileSync(lokasi, 'utf8').replaceAll('__BASE_URL__', asal);
+        cacheHtml.set(kunci, html);
+      }
+      res.type('html').send(html);
+    });
   }
 
   // Dashboard SPA: /dashboard dan semua turunannya -> dashboard.html

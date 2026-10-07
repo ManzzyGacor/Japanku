@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#16130F">
+  <title>Harga Server JPM mulai Rp7.000/bulan — VaresaJasher</title>
+  <meta name="description" content="Antena Rp7.000, Menara Rp12.000, Satelit Rp15.000 per server per 30 hari. Semua mode JPM termasuk, bayar pakai QRIS, dan bisa coba gratis 1 hari.">
+  <link rel="canonical" href="__BASE_URL__/harga">
+  <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="VaresaJasher">
+  <meta property="og:locale" content="id_ID">
+  <meta property="og:title" content="Harga Server JPM mulai Rp7.000/bulan">
+  <meta property="og:description" content="Antena Rp7.000, Menara Rp12.000, Satelit Rp15.000 per server per 30 hari. Semua mode JPM termasuk, bayar pakai QRIS, dan bisa coba gratis 1 hari.">
+  <meta property="og:url" content="__BASE_URL__/harga">
+  <meta property="og:image" content="__BASE_URL__/assets/img/og/default.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="VaresaJasher — bot JPM & jasher WhatsApp yang jalan 24 jam">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..100,400..900&family=IBM+Plex+Mono:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&display=swap">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/landing.css">
+  <style>
+    /* Khusus /harga — primitif lain diambil dari base.css + landing.css */
+    .laman-kepala { padding: 52px 0 10px; }
+    .laman-kepala .kicker { margin-bottom: 14px; }
+    .laman-kepala h1 { font-size: clamp(40px, 7vw, 72px); }
+    .laman-kepala .lead { margin-top: 18px; max-width: 48ch; }
+    .seksi h2.h2-kecil { font-size: clamp(30px, 4.4vw, 46px); }
+    .blok { margin-top: 56px; }
+    .blok > .kicker { margin-bottom: 10px; }
+    .blok-judul { margin-bottom: 20px; }
+
+    /* Tabel bandingkan paket — tabel sendiri (bukan .tabel) agar aturan kartu
+       mobile base.css tidak mengacak. Scroll horizontal hanya di dalam kotak. */
+    .banding-gulir { overflow-x: auto; border: var(--tebal) solid var(--tinta); box-shadow: var(--bayang-m); background: var(--kertas-terang); -webkit-overflow-scrolling: touch; }
+    .banding { width: 100%; min-width: 680px; border-collapse: collapse; }
+    .banding th, .banding td { padding: 12px 14px; text-align: left; border-bottom: 1.5px solid var(--garis-halus); vertical-align: top; font-size: 14.5px; }
+    .banding thead th { background: var(--tinta); color: var(--kertas); border-bottom: var(--tebal) solid var(--tinta); font-family: var(--f-poster); font-stretch: 62%; font-weight: 900; font-size: 20px; text-transform: uppercase; letter-spacing: .01em; line-height: 1; white-space: nowrap; }
+    .banding thead th small { display: block; font-family: var(--f-mesin); font-stretch: 100%; font-weight: 600; font-size: 11px; letter-spacing: .08em; color: var(--di-tinta-redup); margin-top: 5px; }
+    .banding thead th:first-child { background: var(--tinta); color: var(--di-tinta-redup); font-family: var(--f-mesin); font-size: 12px; font-weight: 700; letter-spacing: .1em; }
+    .banding tbody th { font-weight: 600; color: var(--tinta); width: 34%; }
+    .banding td { font-family: var(--f-mesin); font-size: 13.5px; color: var(--tinta-2); font-variant-numeric: tabular-nums; }
+    .banding td.ya { color: var(--hijau); font-weight: 700; }
+    .banding .harga { color: var(--tinta); font-weight: 700; font-size: 15px; }
+    .banding col.sorot, .banding th.sorot { background: var(--sinyal-pucat); }
+    .banding tbody tr:last-child th, .banding tbody tr:last-child td { border-bottom: 0; }
+    .banding-hint { display: none; }
+
+    /* "Selalu termasuk" */
+    .termasuk { list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 32px; border-top: var(--tebal) solid var(--tinta); }
+    .termasuk li { display: flex; gap: 10px; align-items: baseline; padding: 11px 0; border-bottom: 1.5px solid var(--garis-halus); font-size: 15px; }
+    .termasuk li::before { content: "✓"; font-weight: 800; color: var(--hijau); flex-shrink: 0; }
+
+    .catatan-blok { margin-top: 18px; }
+    .baris-kaki { margin-top: 14px; font-size: 13.5px; line-height: 1.55; color: var(--tinta-3); }
+    .baris-kaki p { margin-top: 6px; }
+    .baris-kaki i, .baris-kaki em { color: var(--tinta-2); font-style: italic; }
+    .mini-faq { margin-top: 10px; }
+    [id] { scroll-margin-top: 20px; }
+
+    @media (max-width: 760px) {
+      .laman-kepala { padding: 30px 0 4px; }
+      .blok { margin-top: 44px; }
+      .termasuk { grid-template-columns: minmax(0, 1fr); gap: 0; }
+      .banding-hint { display: block; font-family: var(--f-mesin); font-size: 12px; color: var(--tinta-3); margin-bottom: 8px; letter-spacing: .04em; }
+    }
+  </style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-panah" viewBox="0 0 24 24"><path d="M4 12h15M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-silang" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6h.01"/></symbol>
+</svg>
+
+<div class="masthead"><div class="wrap masthead-in">
+  <span id="dateline">Edisi 07.10.2026</span>
+  <span class="hide-m">Pusat siaran JPM &amp; jasher WhatsApp</span>
+  <span class="onair" id="onair" hidden></span>
+</div></div>
+
+<header class="nav"><div class="wrap nav-in">
+  <a class="merek" href="/" aria-label="VaresaJasher, beranda">
+    <span class="merek-tanda" aria-hidden="true">VJ</span>
+    <span class="merek-teks"><span class="merek-nama">Varesa<b>Jasher</b></span><span class="merek-sub">Pusat siaran JPM</span></span>
+  </a>
+  <nav class="nav-tautan" aria-label="Navigasi utama">
+    <a href="/#mode">Fitur</a><a href="/harga" class="aktif" aria-current="page">Harga</a><a href="/panduan">Panduan</a><a href="/faq">FAQ</a>
+  </nav>
+  <div class="nav-aksi" id="navAksi">
+    <a class="btn btn-sekunder btn-s" href="/masuk">Masuk</a>
+    <a class="btn btn-utama btn-s" href="/daftar">Daftar</a>
+  </div>
+  <button class="btn btn-sekunder btn-s btn-ikon nav-menu" id="navMenu" aria-expanded="false" aria-controls="navSheet" aria-label="Buka menu"><svg class="i"><use href="#i-menu"/></svg></button>
+</div></header>
+
+<div class="nav-sheet" id="navSheet" hidden>
+  <div class="nav-sheet-atas">
+    <a class="merek" href="/" aria-label="VaresaJasher, beranda"><span class="merek-tanda" aria-hidden="true">VJ</span><span class="merek-teks"><span class="merek-nama">Varesa<b>Jasher</b></span></span></a>
+    <button class="btn btn-sekunder btn-s btn-ikon" id="navTutup" aria-label="Tutup menu"><svg class="i"><use href="#i-silang"/></svg></button>
+  </div>
+  <nav class="nav-sheet-tautan" aria-label="Navigasi utama">
+    <a href="/#mode">Fitur</a><a href="/harga" class="aktif" aria-current="page">Harga</a><a href="/panduan">Panduan</a><a href="/faq">FAQ</a>
+  </nav>
+  <div class="nav-sheet-aksi" id="navSheetAksi">
+    <a class="btn btn-sekunder btn-l" href="/masuk">Masuk</a>
+    <a class="btn btn-utama btn-l" href="/daftar">Daftar gratis</a>
+  </div>
+</div>
+
+<main>
+<!-- KEPALA -->
+<section class="seksi laman-kepala"><div class="wrap">
+  <p class="kicker">Tiket siaran</p>
+  <h1 class="poster">Harga sederhana,<br>per server</h1>
+  <p class="lead">Satu server untuk satu nomor WhatsApp, berlaku 30 hari. Semua mode JPM ada di semua paket — pilih sesuai jumlah grup dan seberapa sering kamu promosi.</p>
+</div></section>
+
+<!-- KARTU TIKET + TRIAL -->
+<section class="blok" id="paket"><div class="wrap">
+  <div class="tiket-grid" id="daftarHarga">
+    <p class="memuat">Memuat harga<span class="kursor"></span></p>
+  </div>
+  <div id="pitaTrial"></div>
+  <p class="catatan-harga"><span class="qris-tag">QRIS</span><span>Bayar pakai saldo. Isi saldo lewat QRIS otomatis — saldo masuk begitu pembayaran terkonfirmasi. Harga sudah final; biaya layanan pembayaran (kalau ada) selalu ditampilkan sebelum kamu bayar.</span></p>
+</div></section>
+
+<!-- BANDINGKAN PAKET -->
+<section class="blok" id="banding"><div class="wrap">
+  <p class="kicker">Rinci</p>
+  <h2 class="poster h2 h2-kecil blok-judul">Bandingkan paket</h2>
+  <p class="banding-hint">Geser tabel ke samping untuk lihat semua paket.</p>
+  <div class="banding-gulir" tabindex="0" role="region" aria-label="Perbandingan paket">
+    <table class="banding">
+      <colgroup><col><col><col><col><col class="sorot"></colgroup>
+      <thead>
+        <tr>
+          <th scope="col">Paket</th>
+          <th scope="col">Uji Sinyal<small>Gratis</small></th>
+          <th scope="col">Antena<small>Server kecil</small></th>
+          <th scope="col">Menara<small>Server sedang</small></th>
+          <th scope="col" class="sorot">Satelit<small>Server besar</small></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><th scope="row">Harga</th><td class="harga" data-harga="uji">Gratis</td><td class="harga" data-harga="antena">Rp7.000</td><td class="harga" data-harga="menara">Rp12.000</td><td class="harga" data-harga="satelit">Rp15.000</td></tr>
+        <tr><th scope="row">Masa aktif</th><td>24 jam</td><td>30 hari</td><td>30 hari</td><td>30 hari</td></tr>
+        <tr><th scope="row">Nomor WhatsApp</th><td>1</td><td>1</td><td>1</td><td>1</td></tr>
+        <tr><th scope="row">JPM biasa, JPM tag, Auto JPM, Auto JPM Channel</th><td class="ya">✓</td><td class="ya">✓</td><td class="ya">✓</td><td class="ya">✓</td></tr>
+        <tr><th scope="row">JPM SW Grup</th><td>segera</td><td>segera</td><td>segera</td><td>segera</td></tr>
+        <tr><th scope="row">Grup sasaran per putaran</th><td>20</td><td>50</td><td>200</td><td>Semua grup</td></tr>
+        <tr><th scope="row">Postingan Auto JPM tersimpan</th><td>1</td><td>3</td><td>10</td><td>30</td></tr>
+        <tr><th scope="row">Tugas otomatis sekaligus</th><td>1</td><td>1</td><td>1</td><td>2</td></tr>
+        <tr><th scope="row">Jeda antar grup</th><td>min. 5 detik</td><td>min. 5 detik</td><td>min. 5 detik</td><td>min. 5 detik</td></tr>
+        <tr><th scope="row">Interval Auto JPM</th><td>min. 10 menit</td><td>min. 10 menit</td><td>min. 10 menit</td><td>min. 10 menit</td></tr>
+        <tr><th scope="row">Whitelist, terminal langsung, pengaturan dari web</th><td class="ya">✓</td><td class="ya">✓</td><td class="ya">✓</td><td class="ya">✓</td></tr>
+        <tr><th scope="row">Kode pairing &amp; QR</th><td class="ya">✓</td><td class="ya">✓</td><td class="ya">✓</td><td class="ya">✓</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="baris-kaki">
+    <p><i>Putaran</i> = satu kali bot mengirim ke seluruh grup sasaran. Kalau grup kamu lebih banyak dari batas paket, bot mengirim sebanyak batasnya dan memberi tahu kamu di terminal. Atur grup mana yang dilewati lewat whitelist.</p>
+    <p><i>Tugas otomatis</i> = Auto JPM atau Auto JPM Channel yang berjalan terus. JPM sekali kirim tidak dihitung.</p>
+    <p>Jeda dan interval minimal sama di semua paket, karena batas itu ada untuk menjaga nomor kamu, bukan untuk dijual. JPM SW Grup masih dalam pengerjaan dan akan menyusul di semua paket.</p>
+  </div>
+</div></section>
+
+<!-- SELALU TERMASUK -->
+<section class="blok" id="termasuk"><div class="wrap">
+  <p class="kicker">Tanpa biaya tambahan</p>
+  <h2 class="poster h2 h2-kecil blok-judul">Selalu termasuk di semua paket</h2>
+  <ul class="termasuk">
+    <li>Kode pairing &amp; scan QR</li>
+    <li>Meja kirim di dashboard</li>
+    <li>Perintah lewat chat</li>
+    <li>Terminal langsung</li>
+    <li>Whitelist grup</li>
+    <li>Pengaturan bot dari web</li>
+    <li>Sambung ulang otomatis kalau koneksi putus</li>
+    <li>Perpanjang kapan saja</li>
+  </ul>
+</div></section>
+
+<!-- CARA BAYAR -->
+<section class="blok" id="cara-bayar"><div class="wrap">
+  <p class="kicker">Pembayaran</p>
+  <h2 class="poster h2 h2-kecil blok-judul">Bayar pakai QRIS, saldo masuk otomatis</h2>
+  <ol class="tips">
+    <li><span>Buka <b>Saldo</b> di dashboard dan pilih nominal isi saldo.</span></li>
+    <li><span>Pindai QRIS pakai GoPay, OVO, DANA, ShopeePay, LinkAja, atau m-banking. Bayar <b>persis sesuai total</b> yang tertera.</span></li>
+    <li><span>Saldo masuk otomatis begitu pembayaran terkonfirmasi. Tagihan berlaku 5 menit — kalau lewat, buat tagihan baru.</span></li>
+    <li><span>Pakai saldo untuk membeli atau memperpanjang server.</span></li>
+  </ol>
+  <div class="catatan catatan-blok">Harga di atas sudah final. Kalau ada biaya layanan pembayaran, jumlahnya selalu ditampilkan sebelum kamu membayar.</div>
+</div></section>
+
+<!-- MINI FAQ -->
+<section class="blok" id="tanya"><div class="wrap">
+  <p class="kicker">Tanya jawab harga</p>
+  <h2 class="poster h2 h2-kecil blok-judul">Sebelum beli</h2>
+  <div class="faq mini-faq">
+    <details id="bayar-tanpa-saldo">
+      <summary><span class="tanda" aria-hidden="true"></span>Bisa bayar langsung tanpa isi saldo?</summary>
+      <div class="jawab">Untuk sekarang, pembayaran lewat saldo: isi saldo pakai QRIS, lalu beli server. Prosesnya kurang dari satu menit.</div>
+    </details>
+    <details id="ganti-paket">
+      <summary><span class="tanda" aria-hidden="true"></span>Bisa ganti paket?</summary>
+      <div class="jawab">Bisa, saat perpanjangan. Pilih paket baru di menu Perpanjang: kapasitasnya langsung berlaku dan masa aktif bertambah 30 hari.</div>
+    </details>
+    <details id="diskon-banyak">
+      <summary><span class="tanda" aria-hidden="true"></span>Ada diskon kalau beli banyak server?</summary>
+      <div class="jawab">Belum ada untuk sekarang. Kalau nanti ada promo, kami umumkan di dashboard.</div>
+    </details>
+    <details id="refund">
+      <summary><span class="tanda" aria-hidden="true"></span>Kalau server tidak dipakai, bisa refund?</summary>
+      <div class="jawab">Server yang belum pernah ditautkan ke nomor mana pun bisa dibatalkan dalam 24 jam, dan harganya kembali ke saldo. Selengkapnya di <a href="/syarat#pengembalian-dana">Pengembalian dana</a>.</div>
+    </details>
+    <details id="trial-jadi-bayar">
+      <summary><span class="tanda" aria-hidden="true"></span>Trial bisa diubah jadi berbayar?</summary>
+      <div class="jawab">Bisa. Pilih paket dari halaman server trial: nomor tetap tertaut tanpa pairing ulang, dan masa aktif 30 hari mulai dihitung saat kamu membayar.</div>
+    </details>
+  </div>
+  <p class="faq-tautan"><a href="/faq">Lihat semua pertanyaan <svg class="i"><use href="#i-panah"/></svg></a></p>
+</div></section>
+
+<!-- AJAKAN -->
+<section class="cta"><div class="wrap">
+  <div class="cta-panel">
+    <h2>Siap siaran <mark>hari ini?</mark></h2>
+    <p>Buat akun gratis, tautkan nomor, dan kirim JPM pertama kamu dalam hitungan menit. Trial 24 jam, tanpa isi saldo.</p>
+    <div class="cta-aksi">
+      <a class="btn btn-utama btn-l" href="/daftar" data-paket="uji">Coba gratis 1 hari <svg class="i"><use href="#i-panah"/></svg></a>
+      <a class="btn btn-sekunder btn-l" href="/panduan">Baca panduan</a>
+    </div>
+  </div>
+</div></section>
+</main>
+
+<footer class="kaki"><div class="wrap">
+  <div class="kaki-atas">
+    <div class="kaki-merek">
+      <a class="merek" href="/" aria-label="VaresaJasher, beranda"><span class="merek-tanda" aria-hidden="true">VJ</span><span class="merek-teks"><span class="merek-nama">Varesa<b>Jasher</b></span></span></a>
+      <p>Bot JPM &amp; jasher WhatsApp yang jalan 24 jam, diatur dari web.</p>
+    </div>
+    <div class="kaki-kol">
+      <h4>Produk</h4>
+      <ul>
+        <li><a href="/#mode">Mode JPM</a></li>
+        <li><a href="/harga">Harga</a></li>
+        <li><a href="/panduan">Panduan</a></li>
+        <li><a href="/status">Status layanan</a></li>
+      </ul>
+    </div>
+    <div class="kaki-kol">
+      <h4>Bantuan</h4>
+      <ul>
+        <li><a href="/faq">FAQ</a></li>
+        <li><a href="/bantuan">Bantuan &amp; kontak</a></li>
+        <li><a href="/panduan#tautkan-nomor">Cara menautkan nomor</a></li>
+        <li><a href="/bantuan#lapor">Laporkan penyalahgunaan</a></li>
+      </ul>
+    </div>
+    <div class="kaki-kol">
+      <h4>Legal</h4>
+      <ul>
+        <li><a href="/syarat">Syarat &amp; Ketentuan</a></li>
+        <li><a href="/privasi">Kebijakan Privasi</a></li>
+        <li><a href="/syarat#pengembalian-dana">Pengembalian dana</a></li>
+      </ul>
+    </div>
+    <div class="kaki-kol">
+      <h4>Akun</h4>
+      <ul>
+        <li><a href="/masuk">Masuk</a></li>
+        <li><a href="/daftar">Daftar gratis</a></li>
+        <li><a href="/dashboard">Dashboard</a></li>
+      </ul>
+    </div>
+  </div>
+  <p class="kaki-sangkalan">VaresaJasher adalah layanan independen dan tidak berafiliasi dengan, didukung, atau disponsori oleh WhatsApp LLC maupun Meta Platforms, Inc. WhatsApp adalah merek dagang milik pemiliknya.</p>
+  <div class="kaki-bawah">
+    <span>&copy; <span id="tahun">2026</span> VaresaJasher · saudara JadiVaresa (varesa.mom)</span>
+    <span>Dikelola oleh <a href="https://www.instagram.com/manzz_wakeup" target="_blank" rel="noopener">@ManzzyID</a></span>
+  </div>
+</div></footer>
+
+<script type="module" src="/assets/js/halaman-publik.js"></script>
+</body>
+</html>

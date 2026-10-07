@@ -2,63 +2,87 @@
 <html lang="id">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Daftar — VaresaJasher</title>
-  <meta name="theme-color" content="#171226">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#16130F">
   <meta name="robots" content="noindex">
+  <title>Daftar — VaresaJasher</title>
   <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..100,400..900&family=IBM+Plex+Mono:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&display=swap">
   <link rel="stylesheet" href="/assets/css/base.css">
   <link rel="stylesheet" href="/assets/css/auth.css">
 </head>
 <body>
-  <main class="auth-card">
-    <a class="brand" href="/" aria-label="VaresaJasher">
-      <span class="brand-mark">VJ</span>
-      <span class="brand-name">Varesa<b>Jasher</b></span>
+  <main class="auth">
+    <a class="merek" href="/" aria-label="VaresaJasher — ke beranda">
+      <span class="merek-tanda">VJ</span>
+      <span class="merek-teks">
+        <span class="merek-nama">Varesa<b>Jasher</b></span>
+        <span class="merek-sub" aria-hidden="true">Pusat Siaran JPM</span>
+      </span>
     </a>
 
-    <h1>Buat akun VaresaJasher</h1>
-    <p class="auth-sub">Sudah punya akun? <a href="/login">Masuk</a></p>
-
-    <div class="alert alert-error" id="authError" role="alert" hidden></div>
-
-    <form id="authForm" data-mode="register" novalidate>
-      <div class="field">
-        <label for="name">Nama</label>
-        <input class="input" id="name" name="name" type="text" autocomplete="name" required minlength="2" maxlength="60" placeholder="Nama kamu">
+    <section class="kartu auth-kartu">
+      <div class="slug">
+        <span class="slug-judul">Daftar akun</span>
+        <span class="slug-meta">Meja Siaran</span>
       </div>
-      <div class="field">
-        <label for="email">Email</label>
-        <input class="input" id="email" name="email" type="email" autocomplete="email" required placeholder="kamu@email.com">
-      </div>
-      <div class="field">
-        <label for="password">Kata sandi</label>
-        <div class="pass-wrap">
-          <input class="input" id="password" name="password" type="password" autocomplete="new-password" required minlength="8" placeholder="Minimal 8 karakter">
-          <button type="button" class="pass-toggle" data-toggle="password">Lihat</button>
+      <div class="kartu-isi">
+        <h1 class="poster auth-judul">Buka akun baru</h1>
+        <p class="auth-sub">Sudah punya akun? <a href="/masuk">Masuk</a></p>
+
+        <div class="catatan-bahaya" id="authError" role="alert" hidden>
+          <svg class="i" aria-hidden="true"><use href="#i-bahaya"/></svg>
+          <span id="authErrorText"></span>
+        </div>
+
+        <form id="authForm" data-mode="register" novalidate>
+          <div class="field">
+            <label class="label" for="name">Nama</label>
+            <input class="isian" id="name" name="name" type="text" autocomplete="name" required minlength="2" maxlength="60" placeholder="Nama kamu">
+          </div>
+          <div class="field">
+            <label class="label" for="email">Email</label>
+            <input class="isian" id="email" name="email" type="email" autocomplete="email" required placeholder="kamu@email.com">
+          </div>
+          <div class="field">
+            <label class="label" for="password">Kata sandi</label>
+            <div class="isian-gabung">
+              <input class="isian" id="password" name="password" type="password" autocomplete="new-password" required minlength="8" placeholder="Minimal 8 karakter">
+              <button type="button" class="akhiran auth-lihat" data-toggle="password" aria-label="Tampilkan kata sandi">Lihat</button>
+            </div>
+          </div>
+          <div class="field">
+            <label class="label" for="password2">Ulangi kata sandi</label>
+            <input class="isian" id="password2" name="password2" type="password" autocomplete="new-password" required minlength="8" placeholder="Ketik ulang kata sandi">
+          </div>
+          <label class="centang auth-tos" for="tos">
+            <input type="checkbox" id="tos" name="tos" required>
+            <span>Aku paham pengiriman pesan massal bisa membuat nomor WhatsApp dibatasi, dan aku bertanggung jawab atas pesan yang dikirim bot aku.</span>
+          </label>
+          <button class="btn btn-utama btn-l btn-blok auth-kirim" type="submit" id="submitBtn">
+            Buat akun <svg class="i" aria-hidden="true"><use href="#i-panah"/></svg>
+          </button>
+        </form>
+
+        <div id="googleBox" hidden>
+          <div class="auth-pisah"><span>atau</span></div>
+          <div class="auth-gsi">
+            <div id="gsiButton"></div>
+          </div>
         </div>
       </div>
-      <div class="field">
-        <label for="password2">Ulangi kata sandi</label>
-        <input class="input" id="password2" name="password2" type="password" autocomplete="new-password" required minlength="8" placeholder="Ketik ulang kata sandi">
-      </div>
-      <label class="check" for="tos">
-        <input type="checkbox" id="tos" name="tos" required>
-        <span>Saya paham bahwa pengiriman pesan massal bisa membuat nomor WhatsApp dibatasi, dan saya bertanggung jawab atas pesan yang dikirim bot saya.</span>
-      </label>
-      <button class="btn btn-primary btn-block btn-lg" type="submit" id="submitBtn">Buat akun</button>
-    </form>
+    </section>
 
-    <div id="googleBox" hidden>
-      <div class="divider">atau</div>
-      <div id="gsiButton" class="gsi-wrap"></div>
-    </div>
+    <p class="auth-kaki">Kembali ke <a href="/">halaman utama</a></p>
   </main>
 
-  <p class="auth-foot">Kembali ke <a href="/">halaman utama</a></p>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <symbol id="i-bahaya" viewBox="0 0 24 24"><path d="M12 3.5l9.5 16.5H2.5z"/><path d="M12 10v4.5M12 17.5v.4"/></symbol>
+    <symbol id="i-panah" viewBox="0 0 24 24"><path d="M4 12h15M13 6l6 6-6 6"/></symbol>
+  </svg>
 
   <script type="module" src="/assets/js/auth.js"></script>
 </body>
