@@ -1,9 +1,11 @@
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 import { fork } from 'child_process';
 import QRCode from 'qrcode';
 import { db } from './db.js';
 import { env, ROOT } from './env.js';
+import { sumberDayaServer } from './tiers.js';
 
 /*
  Manajer bot: satu server = satu proses anak (bot/worker.js) = satu nomor WhatsApp.
@@ -198,13 +200,26 @@ class BotManager {
 
     this.catat(server.id, login ? `Menyalakan bot untuk login (${login.metode}) ...` : 'Menyalakan bot ...', 'yellow');
 
+    // Batas sumber daya per tier (memori heap + prioritas CPU).
+    const batas = sumberDayaServer(server);
     const child = fork(WORKER, [], {
       cwd: dir,
       env: lingkungan,
-      execArgv: [`--max-old-space-size=${env.botMaxMemoryMb}`],
+      execArgv: [`--max-old-space-size=${batas.maxMemoryMb}`],
       stdio: ['ignore', 'ignore', 'pipe', 'ipc'],
     });
     rt.child = child;
+
+    // Prioritas CPU: tier murah dapat nice lebih tinggi (prioritas lebih
+    // rendah) supaya bot paket mahal lebih didahulukan saat CPU rebutan.
+    // Menurunkan prioritas tidak butuh root; kegagalan diabaikan.
+    if (batas.nice > 0) {
+      try {
+        os.setPriority(child.pid, batas.nice);
+      } catch {
+        /* sebagian lingkungan menolak setPriority; abaikan */
+      }
+    }
 
     child.stderr?.on('data', (data) => this.catat(server.id, data.toString(), 'red'));
     child.on('message', (pesan) => this.terimaPesan(server.id, pesan));
