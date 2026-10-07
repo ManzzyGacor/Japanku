@@ -11,7 +11,7 @@ const router = Router();
 
 router.get('/packages', (_req, res) => {
   const paket = db
-    .prepare('SELECT id, name, description, days, price FROM packages WHERE active = 1 ORDER BY sort, price')
+    .prepare('SELECT id, code, name, size_label AS sizeLabel, description, days, price FROM packages WHERE active = 1 ORDER BY sort, price')
     .all();
   res.json({ success: true, packages: paket });
 });

@@ -93,6 +93,34 @@ const MIGRASI = [
     value TEXT NOT NULL
   );
   `,
+  // --- MIGRASI[1]: katalog paket bertingkat (Uji Sinyal / Antena / Menara / Satelit) ---
+  // Menambah kolom "kode" (stabil, dipakai API & logika) dan "size_label" (label ukuran).
+  // Paket lama (Mingguan/Bulanan/3 Bulan) dinonaktifkan, lalu 3 tier bulanan dimasukkan.
+  `
+  ALTER TABLE packages ADD COLUMN code TEXT NOT NULL DEFAULT '';
+  ALTER TABLE packages ADD COLUMN size_label TEXT NOT NULL DEFAULT '';
+  CREATE UNIQUE INDEX idx_packages_code ON packages(code) WHERE code != '';
+
+  UPDATE packages SET active = 0 WHERE code = '';
+
+  INSERT INTO packages (code, name, size_label, description, days, price, active, sort, created_at)
+  SELECT 'antena', 'Antena', 'Server Kecil',
+         'Buat kamu yang baru mulai jasher. Semua mode JPM, jangkauan sampai 50 grup per putaran.',
+         30, 7000, 1, 1, CAST(strftime('%s','now') AS INTEGER) * 1000
+  WHERE NOT EXISTS (SELECT 1 FROM packages WHERE code = 'antena');
+
+  INSERT INTO packages (code, name, size_label, description, days, price, active, sort, created_at)
+  SELECT 'menara', 'Menara', 'Server Sedang',
+         'Untuk seller yang makin serius. Jangkauan sampai 200 grup per putaran dan 10 postingan tersimpan.',
+         30, 12000, 1, 2, CAST(strftime('%s','now') AS INTEGER) * 1000
+  WHERE NOT EXISTS (SELECT 1 FROM packages WHERE code = 'menara');
+
+  INSERT INTO packages (code, name, size_label, description, days, price, active, sort, created_at)
+  SELECT 'satelit', 'Satelit', 'Server Besar',
+         'Jangkauan penuh ke semua grup, 2 tugas otomatis sekaligus, dan 30 postingan tersimpan. Paling hemat per grup.',
+         30, 15000, 1, 3, CAST(strftime('%s','now') AS INTEGER) * 1000
+  WHERE NOT EXISTS (SELECT 1 FROM packages WHERE code = 'satelit');
+  `,
 ];
 
 function migrasi() {
@@ -105,11 +133,37 @@ function migrasi() {
   }
 }
 
-/** Paket bawaan saat database masih kosong. Harga & durasi bisa diubah dari panel admin. */
+/**
+ * Paket bawaan saat database masih kosong (fresh install).
+ * Tiga tier bulanan: Antena (kecil) / Menara (sedang) / Satelit (besar).
+ * Harga & durasi bisa diubah dari panel admin. Untuk DB lama, MIGRASI[1] yang mengisi.
+ */
 const PAKET_AWAL = [
-  { name: 'Mingguan', description: '1 server, 1 nomor WhatsApp, semua fitur JPM.', days: 7, price: 5000 },
-  { name: 'Bulanan', description: '1 server, 1 nomor WhatsApp, semua fitur JPM.', days: 30, price: 15000 },
-  { name: '3 Bulan', description: 'Lebih hemat untuk pemakaian jangka panjang.', days: 90, price: 40000 },
+  {
+    code: 'antena',
+    name: 'Antena',
+    sizeLabel: 'Server Kecil',
+    description: 'Buat kamu yang baru mulai jasher. Semua mode JPM, jangkauan sampai 50 grup per putaran.',
+    days: 30,
+    price: 7000,
+  },
+  {
+    code: 'menara',
+    name: 'Menara',
+    sizeLabel: 'Server Sedang',
+    description: 'Untuk seller yang makin serius. Jangkauan sampai 200 grup per putaran dan 10 postingan tersimpan.',
+    days: 30,
+    price: 12000,
+  },
+  {
+    code: 'satelit',
+    name: 'Satelit',
+    sizeLabel: 'Server Besar',
+    description:
+      'Jangkauan penuh ke semua grup, 2 tugas otomatis sekaligus, dan 30 postingan tersimpan. Paling hemat per grup.',
+    days: 30,
+    price: 15000,
+  },
 ];
 
 export const PENGATURAN_SITUS_AWAL = {
@@ -126,9 +180,9 @@ function benih() {
 
   if (db.prepare('SELECT COUNT(*) AS n FROM packages').get().n === 0) {
     const tambah = db.prepare(
-      'INSERT INTO packages (name, description, days, price, sort, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+      'INSERT INTO packages (code, name, size_label, description, days, price, sort, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
     );
-    PAKET_AWAL.forEach((p, i) => tambah.run(p.name, p.description, p.days, p.price, i, sekarang));
+    PAKET_AWAL.forEach((p, i) => tambah.run(p.code, p.name, p.sizeLabel, p.description, p.days, p.price, i + 1, sekarang));
   }
 
   const isi = db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)');

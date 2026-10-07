@@ -4,6 +4,7 @@ import { env, ROOT } from './env.js';
 import { db } from './db.js';
 import { muatPengguna, wajibJson, bersihkanSesiLama } from './auth.js';
 import { manager } from './bot-manager.js';
+import { pasangHalaman } from './halaman.js';
 import authRoutes from './routes/auth.js';
 import akunRoutes from './routes/akun.js';
 import serverRoutes from './routes/servers.js';
@@ -61,11 +62,15 @@ api.use((_req, res) => res.status(404).json({ success: false, message: 'Endpoint
 app.use('/api', api);
 
 // ---------------------------------------------------------------------------
-// Halaman
+// Halaman (URL bersih tanpa .html; lihat src/halaman.js)
 // ---------------------------------------------------------------------------
 
-app.get('/admin', (_req, res) => res.redirect('/dashboard#/admin'));
-app.use(express.static(PUBLIC, { extensions: ['html'], index: 'index.html', maxAge: '1h' }));
+pasangHalaman(app);
+
+// Aset statis (css/js/img). extensions:false supaya *.html tidak dilayani langsung
+// — file .html hanya dijangkau lewat path bersih di pasangHalaman().
+app.use(express.static(PUBLIC, { index: false, maxAge: '1h' }));
+
 app.use((req, res) => {
   res.status(404).sendFile(path.join(PUBLIC, '404.html'));
 });
