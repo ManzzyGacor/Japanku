@@ -36,14 +36,3 @@ export async function getTargetGroups(client) {
   const groups = await getAllGroups(client);
   return groups.filter((group) => !whitelist.includes(group.id));
 }
-
-/** Daftar JID anggota sebuah grup (dipakai pushkontak) */
-export async function getGroupParticipants(client, groupId) {
-  try {
-    const metadata = await client.group.queryGroupMetadata(groupId);
-    return metadata.participants ?? [];
-  } catch (error) {
-    log(`Gagal mengambil anggota grup ${groupId}: ${error.message}`, 'red');
-    return [];
-  }
-}

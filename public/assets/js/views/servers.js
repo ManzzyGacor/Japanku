@@ -13,7 +13,6 @@ const PERINTAH = [
   ['autojpm', 'Simpan pesan sebelumnya lalu kirim berulang terus'],
   ['autojpm list / stop', 'Lihat daftar postingan / hentikan AutoJPM'],
   ['autoreply <pesan>', 'Balas otomatis ke grup yang sedang ramai'],
-  ['pushkontak <ID_Grup> <pesan>', 'Japri ke semua anggota satu grup'],
   ['whitelist', 'Grup yang dilewati jpm & autojpm'],
   ['addwhitelist 1,2,3', 'Tambah whitelist (nomor dari listgc)'],
   ['delwhitelist 1 / all', 'Hapus dari whitelist'],

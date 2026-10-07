@@ -68,7 +68,7 @@ api('/auth/me')
             <ul>
               <li>1 server untuk 1 nomor</li>
               <li>JPM, JPM Tag, AutoJPM</li>
-              <li>Autoreply, whitelist, push kontak</li>
+              <li>Autoreply & whitelist grup</li>
               <li>Terminal & pengaturan dari web</li>
             </ul>
             <a class="btn ${p.id === hemat.id ? 'btn-primary' : 'btn-ghost'} btn-block" href="/register">Pilih ${p.name}</a>
