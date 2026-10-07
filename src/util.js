@@ -1,6 +1,9 @@
-/** Lempar error dengan kode HTTP; ditangkap oleh penangan error di server.js */
-export function gagal(status, message) {
-  throw Object.assign(new Error(message), { status });
+/**
+ * Lempar error dengan kode HTTP; ditangkap oleh penangan error di server.js.
+ * `extra` (opsional) dikirim ke klien HANYA untuk error < 500, mis. { code, orderId }.
+ */
+export function gagal(status, message, extra) {
+  throw Object.assign(new Error(message), { status, extra });
 }
 
 export const HARI_MS = 24 * 60 * 60 * 1000;

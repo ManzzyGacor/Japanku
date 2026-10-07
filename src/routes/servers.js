@@ -1,10 +1,10 @@
-import fs from 'fs';
-import path from 'path';
 import { Router } from 'express';
-import { db, ubahSaldo } from '../db.js';
+import { db } from '../db.js';
 import { wajibLogin, pembatas } from '../auth.js';
-import { manager, bacaPengaturanBot, folderServer, PENGATURAN_BOT_AWAL } from '../bot-manager.js';
-import { gagal, teks, bulat, nomorWa, HARI_MS, rupiah } from '../util.js';
+import { manager, bacaPengaturanBot } from '../bot-manager.js';
+import { paketAktif, beliDariSaldo, perpanjangDariSaldo, nyalakanSetelahPerpanjang } from '../toko.js';
+import { tutupInvoice } from '../pembayaran.js';
+import { gagal, teks, bulat, nomorWa, rupiah } from '../util.js';
 
 const router = Router();
 router.use(wajibLogin);
@@ -55,12 +55,6 @@ function milikku(req) {
 
 const ambilServer = (id) => db.prepare('SELECT * FROM servers WHERE id = ?').get(id);
 
-function paketAktif(id) {
-  const paket = db.prepare('SELECT * FROM packages WHERE id = ? AND active = 1').get(Number(id));
-  if (!paket) gagal(400, 'Paket tidak ditemukan atau sudah tidak dijual.');
-  return paket;
-}
-
 // ---------------------------------------------------------------------------
 // Daftar, beli, ubah nama, hapus
 // ---------------------------------------------------------------------------
@@ -74,20 +68,9 @@ const batasBeli = pembatas({ batas: 20, jendelaMs: 60 * 60 * 1000, kunci: (req) 
 
 router.post('/', batasBeli, (req, res) => {
   const paket = paketAktif(req.body?.packageId);
-  const jumlah = db.prepare('SELECT COUNT(*) AS n FROM servers WHERE user_id = ?').get(req.user.id).n;
-  const name = teks(req.body?.name, { nama: 'Nama server', max: 40, wajib: false }) || `Server ${jumlah + 1}`;
+  const name = teks(req.body?.name, { nama: 'Nama server', max: 40, wajib: false });
 
-  const id = db.transaction(() => {
-    ubahSaldo(req.user.id, -paket.price, 'purchase', `Beli server "${name}" - paket ${paket.name} (${paket.days} hari)`);
-    const sekarang = Date.now();
-    return db
-      .prepare(
-        'INSERT INTO servers (user_id, name, package_id, settings, expires_at, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-      )
-      .run(req.user.id, name, paket.id, JSON.stringify(PENGATURAN_BOT_AWAL), sekarang + paket.days * HARI_MS, sekarang)
-      .lastInsertRowid;
-  })();
-
+  const id = beliDariSaldo(req.user.id, { paket, name });
   res.status(201).json({ success: true, server: bentukServer(ambilServer(id)) });
 });
 
@@ -110,6 +93,14 @@ router.delete('/:id', async (req, res) => {
 
   if (server.phone && manager.snapshot(server.id).status === 'online') await manager.logout(server);
   else await manager.stop(server.id);
+
+  // Batalkan tagihan perpanjang yang masih menunggu untuk server ini (best effort).
+  const tagihan = db
+    .prepare("SELECT * FROM invoices WHERE kind = 'renew' AND server_id = ? AND status = 'pending'")
+    .all(server.id);
+  for (const inv of tagihan) {
+    await tutupInvoice(inv, 'cancelled').catch((e) => console.error('[server-delete] tutup invoice gagal', inv.order_id, e.message));
+  }
 
   db.prepare('DELETE FROM servers WHERE id = ?').run(server.id);
   manager.hapusFolder(server.id);
@@ -263,24 +254,8 @@ router.post('/:id/renew', (req, res) => {
   const server = milikku(req);
   const paket = paketAktif(req.body?.packageId);
 
-  db.transaction(() => {
-    ubahSaldo(req.user.id, -paket.price, 'renew', `Perpanjang "${server.name}" - paket ${paket.name} (${paket.days} hari)`);
-    const dasar = Math.max(Date.now(), server.expires_at);
-    db.prepare('UPDATE servers SET expires_at = ?, package_id = ? WHERE id = ?').run(
-      dasar + paket.days * HARI_MS,
-      paket.id,
-      server.id,
-    );
-  })();
-
-  // Server yang tadinya mati karena kedaluwarsa langsung dinyalakan lagi
-  const tadinyaKedaluwarsa = server.expires_at <= Date.now();
-  const terbaru = ambilServer(server.id);
-  const adaSesi = fs.existsSync(path.join(folderServer(server.id), 'sessions'));
-  if (tadinyaKedaluwarsa && terbaru.phone && adaSesi && !manager.isRunning(server.id)) {
-    db.prepare('UPDATE servers SET enabled = 1 WHERE id = ?').run(server.id);
-    manager.start(ambilServer(server.id));
-  }
+  perpanjangDariSaldo(req.user.id, server, paket);
+  nyalakanSetelahPerpanjang(server);
 
   res.json({
     success: true,

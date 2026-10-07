@@ -2,6 +2,9 @@ import { Router } from 'express';
 import { db, ubahSaldo, semuaPengaturan, simpanPengaturan } from '../db.js';
 import { wajibAdmin, publicUser, isAdmin } from '../auth.js';
 import { manager } from '../bot-manager.js';
+import { qrisAktif, modeSimulasi, GatewayError } from '../payment.js';
+import { cekDanProses, bentukInvoiceAdmin } from '../pembayaran.js';
+import { env } from '../env.js';
 import { bentukServer } from './servers.js';
 import { gagal, teks, bulat, HARI_MS, rupiah } from '../util.js';
 
@@ -34,6 +37,18 @@ router.get('/stats', (_req, res) => {
       ).n,
       salesThisMonth: -satu(
         "SELECT COALESCE(SUM(amount), 0) AS n FROM transactions WHERE type IN ('purchase', 'renew') AND created_at >= ?",
+        awalBulan,
+      ).n,
+      pendingInvoices: satu("SELECT COUNT(*) AS n FROM invoices WHERE status = 'pending' AND expires_at > ?", sekarang).n,
+      invoiceAttention: satu(
+        "SELECT COUNT(*) AS n FROM invoices WHERE status != 'completed' AND handled_at IS NULL AND (recheck = 1 OR note != '')",
+      ).n,
+      qrisThisMonth: satu(
+        "SELECT COALESCE(SUM(subtotal), 0) AS n FROM invoices WHERE status = 'completed' AND completed_at >= ?",
+        awalBulan,
+      ).n,
+      qrisFeeThisMonth: satu(
+        "SELECT COALESCE(SUM(fee), 0) AS n FROM invoices WHERE status = 'completed' AND completed_at >= ?",
         awalBulan,
       ).n,
     },
@@ -251,11 +266,89 @@ router.get('/servers/:id/logs', (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
+// Tagihan QRIS
+// ---------------------------------------------------------------------------
+
+const POLA_ORDER = /^VJ\d{6}[A-Z2-9]{6}$/;
+
+function invoiceAdminById(orderId) {
+  if (!POLA_ORDER.test(String(orderId || ''))) gagal(404, 'Invoice tidak ditemukan.');
+  const inv = db.prepare('SELECT * FROM invoices WHERE order_id = ?').get(orderId);
+  if (!inv) gagal(404, 'Invoice tidak ditemukan.');
+  return inv;
+}
+
+router.get('/invoices', (req, res) => {
+  const { status, kind } = req.query;
+  const q = cari(req.query.q);
+  const syarat = [];
+  const params = [];
+  if (status === 'perhatian') {
+    syarat.push("i.status != 'completed' AND i.handled_at IS NULL AND (i.recheck = 1 OR i.note != '')");
+  } else if (['pending', 'completed', 'expired', 'cancelled'].includes(status)) {
+    syarat.push('i.status = ?');
+    params.push(status);
+  }
+  if (['topup', 'buy', 'renew'].includes(kind)) {
+    syarat.push('i.kind = ?');
+    params.push(kind);
+  }
+  if (req.query.q) {
+    syarat.push('(i.order_id LIKE ? OR IFNULL(i.gateway_trx_id, \'\') LIKE ? OR u.email LIKE ? OR u.name LIKE ?)');
+    params.push(q, q, q, q);
+  }
+  const where = syarat.length ? `WHERE ${syarat.join(' AND ')}` : '';
+  const rows = db
+    .prepare(`SELECT i.* FROM invoices i JOIN users u ON u.id = i.user_id ${where} ORDER BY i.id DESC LIMIT 200`)
+    .all(...params);
+  res.json({ success: true, invoices: rows.map(bentukInvoiceAdmin) });
+});
+
+router.post('/invoices/:orderId/check', async (req, res) => {
+  const inv = invoiceAdminById(req.params.orderId);
+  if (!qrisAktif()) gagal(400, 'QRIS tidak aktif.');
+  let hasil;
+  try {
+    hasil = await cekDanProses(inv, { paksa: true, sumber: 'admin' });
+  } catch (e) {
+    if (e instanceof GatewayError) gagal(502, 'Gateway tidak bisa dihubungi. Coba lagi nanti.', { code: 'GATEWAY_ERROR' });
+    throw e;
+  }
+  const h = hasil ?? db.prepare('SELECT * FROM invoices WHERE id = ?').get(inv.id);
+  let message;
+  if (h.status === 'completed') {
+    message = inv.status === 'completed' ? 'Invoice sudah lunas sebelumnya.' : 'Pembayaran terkonfirmasi, invoice diselesaikan.';
+  } else if (h.note && h.note.startsWith('Nominal')) message = 'Nominal di gateway tidak cocok, cek manual.';
+  else if (h.status === 'pending') message = 'Gateway: belum dibayar.';
+  else message = 'Gateway: kedaluwarsa/dibatalkan.';
+  res.json({ success: true, gatewayStatus: h.gateway_status, invoice: bentukInvoiceAdmin(h), message });
+});
+
+router.post('/invoices/:orderId/dismiss', (req, res) => {
+  const inv = invoiceAdminById(req.params.orderId);
+  const note = teks(req.body?.note, { nama: 'Catatan', max: 200, wajib: false });
+  db.prepare('UPDATE invoices SET recheck = 0, handled_at = ?, note = ? WHERE id = ?').run(
+    Date.now(),
+    `[ditandai selesai oleh admin] ${note}`,
+    inv.id,
+  );
+  res.json({ success: true });
+});
+
+// ---------------------------------------------------------------------------
 // Pengaturan situs
 // ---------------------------------------------------------------------------
 
 router.get('/settings', (_req, res) => {
-  res.json({ success: true, settings: semuaPengaturan() });
+  res.json({
+    success: true,
+    settings: semuaPengaturan(),
+    qris: {
+      enabled: qrisAktif(),
+      simulasi: modeSimulasi(),
+      webhookUrl: env.baseUrl ? `${env.baseUrl}/api/payment/webhook` : '',
+    },
+  });
 });
 
 router.put('/settings', (req, res) => {
@@ -269,6 +362,9 @@ router.put('/settings', (req, res) => {
     contact_whatsapp: teks(b.contact_whatsapp, { nama: 'Kontak WhatsApp', max: 20, wajib: false }).replace(/\D/g, ''),
     min_topup: bulat(b.min_topup, { nama: 'Minimal top up', min: 1000, max: 10_000_000 }),
     announcement: teks(b.announcement, { nama: 'Pengumuman', max: 500, wajib: false }),
+    qris_fee: bulat(b.qris_fee ?? semuaPengaturan().qris_fee, { nama: 'Biaya admin QRIS', min: 0, max: 50_000 }),
+    qris_min_amount: bulat(b.qris_min_amount ?? semuaPengaturan().qris_min_amount, { nama: 'Minimal pembayaran QRIS', min: 1000, max: 1_000_000 }),
+    manual_topup: b.manual_topup === undefined ? semuaPengaturan().manual_topup : b.manual_topup ? '1' : '0',
   });
   res.json({ success: true, settings: semuaPengaturan() });
 });

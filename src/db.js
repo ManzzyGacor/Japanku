@@ -121,6 +121,45 @@ const MIGRASI = [
          30, 15000, 1, 3, CAST(strftime('%s','now') AS INTEGER) * 1000
   WHERE NOT EXISTS (SELECT 1 FROM packages WHERE code = 'satelit');
   `,
+  // --- MIGRASI[2]: tagihan pembayaran QRIS otomatis (AutoGopay) ---
+  `
+  CREATE TABLE invoices (
+    id               INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id         TEXT    NOT NULL UNIQUE,
+    user_id          INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    kind             TEXT    NOT NULL CHECK (kind IN ('topup', 'buy', 'renew')),
+    purpose          TEXT    NOT NULL DEFAULT '{}',
+    server_id        INTEGER REFERENCES servers(id) ON DELETE SET NULL,
+    subtotal         INTEGER NOT NULL,
+    fee              INTEGER NOT NULL DEFAULT 0,
+    amount           INTEGER NOT NULL,
+    gateway          TEXT    NOT NULL DEFAULT 'autogopay',
+    gateway_trx_id   TEXT    UNIQUE,
+    gateway_order_id TEXT    NOT NULL DEFAULT '',
+    gateway_status   TEXT    NOT NULL DEFAULT '',
+    qr_string        TEXT    NOT NULL DEFAULT '',
+    qr_url           TEXT    NOT NULL DEFAULT '',
+    checkout_url     TEXT    NOT NULL DEFAULT '',
+    status           TEXT    NOT NULL DEFAULT 'pending'
+                     CHECK (status IN ('pending', 'completed', 'expired', 'cancelled')),
+    result           TEXT    NOT NULL DEFAULT '',
+    result_note      TEXT    NOT NULL DEFAULT '',
+    note             TEXT    NOT NULL DEFAULT '',
+    handled_at       INTEGER,
+    recheck          INTEGER NOT NULL DEFAULT 0,
+    webhook_count    INTEGER NOT NULL DEFAULT 0,
+    last_webhook_at  INTEGER,
+    checked_at       INTEGER,
+    paid_at          INTEGER,
+    expires_at       INTEGER NOT NULL,
+    completed_at     INTEGER,
+    closed_at        INTEGER,
+    created_at       INTEGER NOT NULL
+  );
+  CREATE INDEX idx_invoices_user   ON invoices(user_id, id);
+  CREATE INDEX idx_invoices_status ON invoices(status, expires_at);
+  CREATE UNIQUE INDEX idx_invoices_satu_pending ON invoices(user_id) WHERE status = 'pending';
+  `,
 ];
 
 function migrasi() {
@@ -173,6 +212,10 @@ export const PENGATURAN_SITUS_AWAL = {
   contact_whatsapp: '',
   min_topup: '5000',
   announcement: '',
+  // Pembayaran QRIS otomatis
+  qris_fee: String(env.qrisFeeAwal), // biaya admin flat (rupiah), per transaksi QRIS
+  qris_min_amount: '1000', // minimal subtotal per QRIS
+  manual_topup: '1', // '1' = top up manual tetap ditampilkan walau QRIS aktif
 };
 
 function benih() {
