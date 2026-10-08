@@ -2,6 +2,7 @@ import { api, html, rupiah, toast } from './lib.js';
 import { ikon } from './ui.js';
 import { daftarServer, detailServer, beliServer } from './views/servers.js';
 import { halamanSaldo } from './views/wallet.js';
+import { halamanInvoice } from './views/invoice.js';
 import { halamanAkun } from './views/account.js';
 import { halamanAdmin } from './views/admin.js';
 
@@ -73,6 +74,7 @@ const RUTE = [
   { pola: /^\/dashboard\/server\/([^/]+)\/?$/, tampil: detailServer, menu: 'servers' },
   { pola: /^\/dashboard\/beli\/?$/, tampil: beliServer, menu: 'buy' },
   { pola: /^\/dashboard\/saldo\/?$/, tampil: halamanSaldo, menu: 'wallet' },
+  { pola: /^\/dashboard\/invoice\/([^/]+)\/?$/, tampil: halamanInvoice, menu: 'wallet' },
   { pola: /^\/dashboard\/akun\/?$/, tampil: halamanAkun, menu: 'account' },
   { pola: /^\/dashboard\/admin(?:\/([a-z]+))?\/?$/, tampil: halamanAdmin, menu: 'admin', admin: true },
 ];

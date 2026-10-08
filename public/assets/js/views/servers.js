@@ -1,5 +1,9 @@
 import { api, html, raw, rupiah, tanggal, sisaWaktu, jam, toast, sambilMemuat, salin, dataForm } from '../lib.js';
 import { ikon, badgeStatus, sedangJalan, konfirmasi, formDialog } from '../ui.js';
+import { kirimTagihan } from './invoice.js';
+
+/** Nominal minimum gateway QRIS (dari /api/site). */
+const minQris = (app) => Math.max(app.site?.qris?.minAmount || 1000, 1000);
 
 const JEDA_PANTAU = 2000; // detail server
 const JEDA_DAFTAR = 5000; // daftar server
@@ -172,10 +176,13 @@ export async function beliServer({ view, app }) {
       <div><dt>Harga ${paket.name} (${paket.days} hari)</dt><dd>${rupiah(paket.price)}</dd></div>
       <div><dt>Saldo kamu</dt><dd>${rupiah(app.user.balance)}</dd></div>
       <div class="total ${raw(kurang ? 'kurang' : '')}"><dt>Sisa saldo</dt><dd>${rupiah(sisa)}</dd></div>`.s;
+    const qrisAktif = !!app.site?.qris?.enabled;
+    const bayarQris = Math.max(paket.price - app.user.balance, minQris(app));
     form.querySelector('#beliAksi').innerHTML = (
       kurang
-        ? html`<div class="catatan-peringatan" role="alert" style="flex:1">${ikon.peringatan}<span>Saldo kurang ${rupiah(-sisa)}. Isi saldo dulu untuk membeli paket ini.</span></div>
-               <a class="btn btn-utama" href="/dashboard/saldo">${ikon.dompet} Isi saldo</a>`
+        ? html`<div class="catatan-peringatan" role="alert" style="flex:1 1 100%">${ikon.peringatan}<span>Saldo kurang ${rupiah(-sisa)}. Isi saldo dulu${qrisAktif ? ', atau bayar paket ini lewat QRIS' : ' untuk membeli paket ini'}.</span></div>
+               <a class="btn btn-sekunder" href="/dashboard/saldo">${ikon.dompet} Isi saldo</a>
+               ${qrisAktif ? html`<button class="btn btn-utama" type="button" id="btnQrisBeli">Bayar ${rupiah(bayarQris)} lewat QRIS ${ikon.panah}</button>` : ''}`
         : html`<button class="btn btn-utama btn-l" type="submit" id="btnBeli">Bayar ${rupiah(paket.price)} dari saldo ${ikon.panah}</button>`
     ).s;
   };
@@ -185,6 +192,31 @@ export async function beliServer({ view, app }) {
     if (e.target.name === 'packageId') ringkas();
   });
   ringkas();
+
+  // Bayar lewat QRIS saat saldo kurang (tombol muncul di branch "kurang").
+  form.addEventListener('click', async (e) => {
+    const btn = e.target.closest('#btnQrisBeli');
+    if (!btn) return;
+    const data = dataForm(form);
+    const paket = packages.find((p) => String(p.id) === data.packageId);
+    if (!paket) return;
+    try {
+      const { invoice } = await sambilMemuat(btn, () =>
+        kirimTagihan('/payment/buy', { body: { packageId: Number(data.packageId), name: data.name } }),
+      );
+      app.pergi(`/dashboard/invoice/${invoice.orderId}`);
+    } catch (error) {
+      if (error.code === 'SALDO_CUKUP') {
+        toast('Saldo kamu ternyata cukup, beli langsung pakai saldo.', 'info');
+        await app.muatUlangUser().catch(() => {});
+        ringkas();
+      } else if (error.code === 'PENDING_EXISTS' && error.orderId) {
+        app.pergi(`/dashboard/invoice/${error.orderId}`);
+      } else {
+        toast(error.message, 'error');
+      }
+    }
+  });
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -720,19 +752,61 @@ export async function detailServer({ view, params, app, masihAktif }) {
   // Perpanjang
   $('#btnPerpanjang').addEventListener('click', async () => {
     if (!packages.length) return void toast('Belum ada paket untuk perpanjang.', 'error');
+    const qrisAktif = !!app.site?.qris?.enabled;
     const data = await formDialog({
       judul: 'Perpanjang server',
       slug: 'Perpanjang',
-      pesan: `Saldo kamu ${rupiah(app.user.balance)}. Perpanjangan dipotong dari saldo.`,
+      pesan: qrisAktif
+        ? `Saldo kamu ${rupiah(app.user.balance)}. Perpanjangan dipotong dari saldo; kalau kurang, bisa bayar lewat QRIS.`
+        : `Saldo kamu ${rupiah(app.user.balance)}. Perpanjangan dipotong dari saldo.`,
       fields: [{ name: 'packageId', label: 'Paket', type: 'select', value: server.package?.id ?? packages[0].id, options: packages.map((p) => ({ value: p.id, label: `${p.name} — ${p.days} hari — ${rupiah(p.price)}` })) }],
       ok: 'Perpanjang',
     });
     if (!data) return;
-    const hasil = await jalankan(null, '/renew', { packageId: Number(data.packageId) });
-    if (hasil) {
-      toast(hasil.message || 'Server diperpanjang.');
-      app.muatUlangUser().catch(() => {});
+    const paket = packages.find((p) => String(p.id) === String(data.packageId));
+    if (!paket) return;
+
+    // Saldo cukup -> potong saldo seperti biasa.
+    if (app.user.balance >= paket.price) {
+      const hasil = await jalankan(null, '/renew', { packageId: paket.id });
+      if (hasil) {
+        toast(hasil.message || 'Server diperpanjang.');
+        app.muatUlangUser().catch(() => {});
+      }
+      return;
     }
+
+    // Saldo kurang + QRIS aktif -> tawarkan bayar lewat QRIS.
+    if (qrisAktif) {
+      const ok = await konfirmasi({
+        judul: 'Bayar lewat QRIS?',
+        slug: 'Perpanjang',
+        pesan: `Saldo kurang ${rupiah(paket.price - app.user.balance)}. Bayar kekurangannya lewat QRIS untuk memperpanjang ${paket.days} hari.`,
+        ok: 'Buat QRIS',
+      });
+      if (!ok) return;
+      try {
+        const { invoice } = await kirimTagihan('/payment/renew', { body: { serverId: id, packageId: paket.id } });
+        app.pergi(`/dashboard/invoice/${invoice.orderId}`);
+      } catch (error) {
+        if (error.code === 'SALDO_CUKUP') {
+          const hasil = await jalankan(null, '/renew', { packageId: paket.id });
+          if (hasil) {
+            toast(hasil.message || 'Server diperpanjang.');
+            app.muatUlangUser().catch(() => {});
+          }
+        } else if (error.code === 'PENDING_EXISTS' && error.orderId) {
+          app.pergi(`/dashboard/invoice/${error.orderId}`);
+        } else {
+          toast(error.message, 'error');
+        }
+      }
+      return;
+    }
+
+    // Saldo kurang, QRIS mati -> arahkan ke isi saldo.
+    toast(`Saldo kurang ${rupiah(paket.price - app.user.balance)}. Isi saldo dulu.`, 'error');
+    app.pergi('/dashboard/saldo');
   });
 
   // Ganti nama

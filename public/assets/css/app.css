@@ -497,3 +497,37 @@ body { min-height: 100vh; }
   .progres-sel > div:nth-child(3) { border-left: 0; }
   .progres-sel > div:nth-child(n+3) { border-top: var(--tipis) solid var(--tinta); }
 }
+
+/* --------------------------------------------------------------------------
+   5.15 TAMBAHAN — Halaman tagihan QRIS (struk lunas / hangus, callout, tabel)
+   -------------------------------------------------------------------------- */
+/* Halaman tagihan: struk di tengah, lebar terbatas */
+.inv-halaman { max-width: 460px; margin: 0 auto; }
+.inv-halaman .kembali-tautan { margin-bottom: 18px; }
+
+/* Baris hijau "Saldo masuk +Rp…" / sukses di struk lunas */
+.struk-masuk { margin-top: 14px; font-family: var(--f-mesin); font-weight: 600; font-size: 22px; line-height: 1.15; color: var(--hijau); overflow-wrap: anywhere; }
+
+/* Cap HANGUS / DIBATALKAN di dalam kotak QR kedaluwarsa: statis & muat */
+.qr-bingkai.hangus .cap { position: static; font-size: 30px; }
+
+/* Callout "tagihan aktif" (pending guard) di halaman saldo */
+.tagihan-aktif { align-items: flex-start; }
+.tagihan-aktif > div { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; min-width: 0; }
+.tagihan-aktif p { margin: 0; overflow-wrap: anywhere; }
+.tagihan-aktif .mono { font-weight: 600; }
+
+/* Tabel tagihan QRIS: jumlah redup utk belum/tidak lunas, no. sebagai tautan */
+.tabel .angka.lemah { color: var(--tinta-3); }
+.tabel .no a { color: var(--tinta); text-decoration: none; border-bottom: var(--rambut) solid var(--tinta-3); }
+.tabel .no a:hover { border-bottom-color: var(--tinta); }
+
+/* Pane isi saldo (QRIS otomatis / transfer manual) */
+.pane[hidden] { display: none; }
+.isi-tab { width: 100%; }
+.isi-tab button { flex: 1; }
+
+@media (max-width: 760px) {
+  .inv-halaman { max-width: none; }
+  .hitung-mundur b { font-size: 34px; }
+}
