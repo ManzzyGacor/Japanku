@@ -31,14 +31,33 @@ Bahasa UI, komentar, dan nama variabel: **Bahasa Indonesia** (ikuti gaya ini).
 
 ## Status & rencana berikutnya
 
-Sudah: landing, login/daftar (+Google opsional), dashboard server, beli/perpanjang, pairing code & QR,
-terminal langsung, pengaturan bot dari web, saldo + top up manual, panel admin, alat CLI `npm run admin`.
+Sudah (inti):
+- Desain "Pusat Siaran" (base.css/landing/auth/app + halaman /harga /faq /panduan /syarat /privasi),
+  URL bersih tanpa .html (src/halaman.js), dashboard SPA History API.
+- Paket bertingkat: Antena 7k / Menara 12k / Satelit 15k (kode di packages.code), trial 'uji' active=0.
+- Pembayaran QRIS AutoGopay (src/payment.js klien, src/pembayaran.js domain, src/toko.js beli/perpanjang
+  bersama). Top up/beli/perpanjang via QRIS; webhook HMAC body mentah (dipasang SEBELUM express.json);
+  1 tagihan/user; hangus 5 menit; penyapu; mode simulasi AUTOGOPAY_SIMULASI=1.
+- Free trial Uji Sinyal (src/trial.js, routes/trial.js): 1/akun, 1/NOMOR WA selamanya (src/nomor.js
+  ledger, dicatat tiap pairing lewat manager.onPairing hook), sinyal lunak IP/perangkat (src/ip.js,
+  src/antiabuse.js), kill switch + admin /api/admin/trial.
+- Keamanan akun: admin via ADMIN_EMAILS hanya kalau email terverifikasi; login Google aman dari
+  ambil-alih (hapus sandi+sesi akun sandi belum terverifikasi).
+- Batas sumber daya per tier (src/tiers.js): memori heap (--max-old-space-size) + nice CPU per paket.
+  CPU hard-cap per bot TIDAK dipakai (di panel batas berlaku se-kontainer).
+- Lama: dashboard server, pairing code/QR, terminal, pengaturan bot, top up manual, panel admin, CLI.
 
-Belum (kandidat langkah berikutnya):
-- Payment gateway QRIS otomatis (mis. Pakasir/Tripay/Midtrans) menggantikan top up manual.
-- Kirim JPM / kelola whitelist & AutoJPM langsung dari dashboard (sekarang lewat perintah chat).
-- Lupa kata sandi via email, notifikasi masa aktif hampir habis, voucher / referral, paket gratis.
-- Log bot hanya di memori (400 baris/server), hilang saat website restart.
+Belum (kandidat berikutnya):
+- Frontend: tombol "Coba gratis" (POST /api/trial/claim) di dashboard, tampilan server trial + countdown,
+  verifikasi email (SMTP belum ada), halaman invoice QRIS kalau belum rampung agent.
+- Kirim JPM / whitelist / AutoJPM langsung dari dashboard (sekarang lewat perintah chat).
+- Lupa kata sandi, notifikasi masa aktif hampir habis, voucher/referral.
+- Log bot hanya di memori (400 baris/server), hilang saat restart.
+
+## Migrasi DB (append-only, jangan ubah yang lama)
+MIGRASI[0] skema awal · [1] packages.code+size_label (tier) · [2] invoices (QRIS) ·
+[3] keamanan akun (users.email_verified_at/email_canonical/signup_*), servers.is_trial,
+nomor_riwayat, trial_claims, security_events, paket 'uji'.
 
 ## Peringatan
 
