@@ -83,8 +83,8 @@ export async function daftarServer({ view, app, masihAktif }) {
         </div>`
       : html`<div class="kosong">
           <h3>Belum ada server</h3>
-          <p>Beli server pertama kamu, lalu tautkan nomor WhatsApp untuk mulai siaran JPM.</p>
-          <a class="btn btn-utama" href="/dashboard/beli">${ikon.tambah} Beli server</a>
+          <p>Coba dulu gratis 24 jam, atau beli server lalu tautkan nomor WhatsApp untuk mulai siaran JPM.</p>
+          <a class="btn btn-utama" href="/dashboard/beli">${ikon.tambah} Coba gratis / beli server</a>
         </div>`;
 
     view.innerHTML = html`
@@ -117,9 +117,45 @@ export async function daftarServer({ view, app, masihAktif }) {
 // Beli server (pemilih paket tiket, §5.21)
 // ===========================================================================
 
+/** Ambil status trial (aman kalau endpoint gagal). */
+async function statusTrial() {
+  try {
+    return await api('/trial/status');
+  } catch {
+    return { enabled: false, eligible: { boleh: false } };
+  }
+}
+
+/** Klaim free trial lalu buka server barunya. Dipakai tombol "Coba gratis". */
+async function klaimTrial(app, tombol) {
+  try {
+    const { server } = await sambilMemuat(tombol, () => api('/trial/claim', { method: 'POST' }));
+    await app.muatUlangUser().catch(() => {});
+    toast('Server Uji Sinyal dibuat. Tautkan nomor untuk mulai.', 'ok', { kicker: 'Free trial' });
+    app.pergi(`/dashboard/server/${server.id}`);
+  } catch (error) {
+    toast(error.message, 'error');
+  }
+}
+
+/** Banner ajakan trial (hanya ditampilkan kalau layak). */
+function bannerTrial(trial) {
+  if (!trial?.enabled || !trial?.eligible?.boleh) return '';
+  return html`<div class="kartu kartu-trial" style="margin-bottom:18px">
+    <div class="kartu-isi" style="display:flex;flex-wrap:wrap;align-items:center;gap:14px;justify-content:space-between">
+      <div>
+        <p class="kicker" style="color:var(--hijau)">Gratis · Uji Sinyal</p>
+        <b style="font-size:18px">Coba dulu gratis 24 jam</b>
+        <p class="bantu" style="margin-top:4px">1 server, semua mode JPM, tanpa bayar. Berlaku sekali per akun & per nomor WhatsApp.</p>
+      </div>
+      <button class="btn btn-utama" type="button" id="btnTrial">${ikon.tambah} Coba gratis 24 jam</button>
+    </div>
+  </div>`;
+}
+
 export async function beliServer({ view, app }) {
   app.setJudul('Beli server');
-  const [{ packages }] = await Promise.all([api('/packages'), app.muatUlangUser()]);
+  const [{ packages }, trial] = await Promise.all([api('/packages'), statusTrial(), app.muatUlangUser()]);
 
   if (!packages.length) {
     view.innerHTML = html`
@@ -136,6 +172,7 @@ export async function beliServer({ view, app }) {
         <p class="sub">Pilih paket. Server langsung aktif dan siap ditautkan ke nomor WhatsApp.</p>
       </div>
     </div>
+    ${bannerTrial(trial)}
     <form class="kartu" id="formBeli">
       <header class="slug"><span class="slug-judul">Pilih paket</span><span class="slug-meta">1 server = 1 nomor</span></header>
       <div class="kartu-isi">
@@ -165,6 +202,8 @@ export async function beliServer({ view, app }) {
         <div class="aksi-jpm" id="beliAksi"></div>
       </div>
     </form>`.s;
+
+  view.querySelector('#btnTrial')?.addEventListener('click', (e) => klaimTrial(app, e.currentTarget));
 
   const form = view.querySelector('#formBeli');
 

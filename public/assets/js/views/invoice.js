@@ -47,7 +47,9 @@ export async function kirimTagihan(path, { method = 'POST', body } = {}) {
 // ---------------------------------------------------------------------------
 const WIB = 'Asia/Jakarta';
 const tglMono = (ms) => {
-  const tgl = new Date(ms).toLocaleDateString('id-ID', { timeZone: WIB, day: '2-digit', month: '2-digit', year: 'numeric' });
+  const tgl = new Date(ms)
+    .toLocaleDateString('id-ID', { timeZone: WIB, day: '2-digit', month: '2-digit', year: 'numeric' })
+    .replace(/\//g, '.'); // §8: tanggal pakai titik di konteks mono
   const jm = new Date(ms).toLocaleTimeString('id-ID', { timeZone: WIB, hour: '2-digit', minute: '2-digit' });
   return `${tgl} ${jm}`;
 };
@@ -202,7 +204,7 @@ export async function halamanInvoice({ view, params, app, masihAktif }) {
           <header class="struk-kop">
             <span class="merek-tanda">VJ</span>
             <div><b>VaresaJasher</b><small>${judulTagihan(inv)}</small></div>
-            <span class="qris-tag">QRIS</span>
+            ${inv.status === 'completed' ? '' : html`<span class="qris-tag">QRIS</span>`}
           </header>
           ${isi}
         </article>
