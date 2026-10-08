@@ -160,6 +160,65 @@ const MIGRASI = [
   CREATE INDEX idx_invoices_status ON invoices(status, expires_at);
   CREATE UNIQUE INDEX idx_invoices_satu_pending ON invoices(user_id) WHERE status = 'pending';
   `,
+  // --- MIGRASI[3]: keamanan akun + free trial (Uji Sinyal) + anti-abuse ---
+  `
+  ALTER TABLE users ADD COLUMN email_verified_at INTEGER;
+  ALTER TABLE users ADD COLUMN email_canonical TEXT NOT NULL DEFAULT '';
+  ALTER TABLE users ADD COLUMN signup_ip TEXT NOT NULL DEFAULT '';
+  ALTER TABLE users ADD COLUMN signup_device TEXT NOT NULL DEFAULT '';
+  -- Akun Google sudah terverifikasi emailnya.
+  UPDATE users SET email_verified_at = created_at WHERE google_sub IS NOT NULL AND google_sub != '';
+
+  ALTER TABLE servers ADD COLUMN is_trial INTEGER NOT NULL DEFAULT 0;
+
+  -- Riwayat SETIAP nomor yang pernah berhasil pairing di situs ini (selamanya).
+  -- Dipakai untuk aturan "1 trial per nomor WhatsApp, selamanya".
+  CREATE TABLE nomor_riwayat (
+    phone         TEXT    PRIMARY KEY,
+    identity_hash TEXT    NOT NULL DEFAULT '',
+    first_server  INTEGER,
+    first_seen_at INTEGER NOT NULL
+  );
+  CREATE INDEX idx_nomor_identity ON nomor_riwayat(identity_hash) WHERE identity_hash != '';
+
+  -- Klaim trial. Satu baris per klaim; status melacak daur hidupnya.
+  CREATE TABLE trial_claims (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id      INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    server_id    INTEGER REFERENCES servers(id) ON DELETE SET NULL,
+    status       TEXT    NOT NULL DEFAULT 'pending_phone'
+                 CHECK (status IN ('pending_phone','active','ended','forfeited','reset')),
+    phone        TEXT,
+    phone_hash   TEXT,
+    ip_key       TEXT    NOT NULL DEFAULT '',
+    device_id    TEXT    NOT NULL DEFAULT '',
+    email_kunci  TEXT    NOT NULL DEFAULT '',
+    created_at   INTEGER NOT NULL,
+    activated_at INTEGER
+  );
+  CREATE INDEX idx_trial_user   ON trial_claims(user_id);
+  CREATE INDEX idx_trial_status ON trial_claims(status);
+  CREATE INDEX idx_trial_ip     ON trial_claims(ip_key);
+  CREATE INDEX idx_trial_device ON trial_claims(device_id);
+
+  -- Catatan peristiwa keamanan (pendaftaran per IP/perangkat), persisten supaya
+  -- batas tidak hilang saat server web restart.
+  CREATE TABLE security_events (
+    id     INTEGER PRIMARY KEY AUTOINCREMENT,
+    kunci  TEXT    NOT NULL,
+    jenis  TEXT    NOT NULL,
+    at     INTEGER NOT NULL
+  );
+  CREATE INDEX idx_sec_kunci ON security_events(jenis, kunci, at);
+
+  -- Paket trial "Uji Sinyal": active=0 supaya tidak muncul di daftar beli dan
+  -- tidak bisa dibeli (paketAktif menolak yang active=0). Hanya dipakai server
+  -- trial lewat kode 'uji'.
+  INSERT INTO packages (code, name, size_label, description, days, price, active, sort, created_at)
+  SELECT 'uji', 'Uji Sinyal', 'Coba gratis', 'Coba semua mode JPM gratis selama 24 jam. 1 server, 1 nomor.',
+         1, 0, 0, 0, CAST(strftime('%s','now') AS INTEGER) * 1000
+  WHERE NOT EXISTS (SELECT 1 FROM packages WHERE code = 'uji');
+  `,
 ];
 
 function migrasi() {
@@ -216,6 +275,14 @@ export const PENGATURAN_SITUS_AWAL = {
   qris_fee: String(env.qrisFeeAwal), // biaya admin flat (rupiah), per transaksi QRIS
   qris_min_amount: '1000', // minimal subtotal per QRIS
   manual_topup: '1', // '1' = top up manual tetap ditampilkan walau QRIS aktif
+  // Free trial (Uji Sinyal)
+  trial_enabled: '1', // '0' = matikan trial
+  trial_hours: '24', // lama trial, dihitung sejak nomor tersambung
+  trial_requirement: 'none', // 'none' | 'google' (wajib login Google untuk klaim)
+  trial_max_per_ip_30d: '2', // batas lunak klaim per IP dalam 30 hari
+  trial_max_per_device_30d: '1', // batas lunak klaim per perangkat dalam 30 hari
+  trial_pending_max: '20', // maksimal klaim pending (belum tersambung) se-situs
+  reg_max_per_ip_day: '5', // maksimal pendaftaran per IP per 24 jam
 };
 
 function benih() {

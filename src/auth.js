@@ -73,7 +73,11 @@ export function bersihkanSesiLama() {
 }
 
 export function isAdmin(user) {
-  return user?.role === 'admin' || env.adminEmails.includes(String(user?.email ?? '').toLowerCase());
+  if (user?.role === 'admin') return true;
+  // Admin lewat ADMIN_EMAILS hanya berlaku kalau email sudah TERVERIFIKASI
+  // (lewat Google). Mencegah orang mendaftar duluan pakai email admin + sandi.
+  const terdaftar = env.adminEmails.includes(String(user?.email ?? '').toLowerCase());
+  return terdaftar && Boolean(user?.email_verified_at);
 }
 
 /** Bentuk data pengguna yang aman dikirim ke browser */
@@ -85,6 +89,7 @@ export function publicUser(user) {
     balance: user.balance,
     isAdmin: isAdmin(user),
     hasPassword: Boolean(user.password_hash),
+    emailVerified: Boolean(user.email_verified_at),
     createdAt: user.created_at,
   };
 }

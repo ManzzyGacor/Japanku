@@ -53,13 +53,18 @@ export const beliDariSaldo = db.transaction((userId, { paket, name }) => {
  */
 export const perpanjangDariSaldo = db.transaction((userId, server, paket) => {
   ubahSaldo(userId, -paket.price, 'renew', `Perpanjang "${server.name}" - paket ${paket.name} (${paket.days} hari)`);
-  const dasar = Math.max(Date.now(), server.expires_at);
+  // Server trial yang diperpanjang dengan paket berbayar jadi server biasa.
+  // Sisa jam trial tidak ditumpuk: masa aktif dihitung dari sekarang.
+  const dasar = server.is_trial ? Date.now() : Math.max(Date.now(), server.expires_at);
   const paketAda = db.prepare('SELECT 1 FROM packages WHERE id = ?').get(paket.id) ? paket.id : server.package_id;
-  db.prepare('UPDATE servers SET expires_at = ?, package_id = ? WHERE id = ?').run(
+  db.prepare('UPDATE servers SET expires_at = ?, package_id = ?, is_trial = 0 WHERE id = ?').run(
     dasar + paket.days * HARI_MS,
     paketAda,
     server.id,
   );
+  if (server.is_trial) {
+    db.prepare("UPDATE trial_claims SET status = 'ended' WHERE server_id = ? AND status = 'active'").run(server.id);
+  }
 });
 
 /**

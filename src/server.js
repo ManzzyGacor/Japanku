@@ -3,6 +3,9 @@ import express from 'express';
 import { env, ROOT } from './env.js';
 import { db } from './db.js';
 import { muatPengguna, wajibJson, bersihkanSesiLama } from './auth.js';
+import { pasangPerangkat, bersihkanPeristiwa, backfillEmailKanonik } from './antiabuse.js';
+import { aktifkanTrialSaatTersambung, mulaiSapuTrial } from './trial.js';
+import trialRoutes from './routes/trial.js';
 import { manager } from './bot-manager.js';
 import { pasangHalaman } from './halaman.js';
 import { webhookPembayaran, mulaiSapu } from './pembayaran.js';
@@ -57,12 +60,14 @@ app.use(muatPengguna);
 
 const api = express.Router();
 api.use(wajibJson);
+api.use(pasangPerangkat);
 api.use((_req, res, next) => {
   res.setHeader('Cache-Control', 'no-store');
   next();
 });
 api.use('/auth', authRoutes);
 api.use('/payment', pembayaranRoutes);
+api.use('/trial', trialRoutes);
 api.use('/servers', serverRoutes);
 api.use('/admin', adminRoutes);
 api.use('/', akunRoutes);
@@ -115,13 +120,19 @@ const server = app.listen(env.port, env.host, () => {
 
   mulaiSapu();
 
+  // Hook pairing untuk ledger nomor & aktivasi trial.
+  manager.onPairing = aktifkanTrialSaatTersambung;
+  mulaiSapuTrial();
+
   const jumlah = manager.resumeAll();
   if (jumlah) console.log(`Menyalakan ulang ${jumlah} bot ...`);
 });
 
 setInterval(() => manager.cekKedaluwarsa().catch((e) => console.error('Cek kedaluwarsa gagal:', e)), 60 * 1000);
 setInterval(bersihkanSesiLama, 60 * 60 * 1000);
+setInterval(bersihkanPeristiwa, 6 * 60 * 60 * 1000);
 bersihkanSesiLama();
+backfillEmailKanonik();
 
 let sedangMati = false;
 async function matikan(sinyal) {

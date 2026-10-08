@@ -4,6 +4,7 @@ import { wajibLogin, pembatas } from '../auth.js';
 import { manager, bacaPengaturanBot } from '../bot-manager.js';
 import { paketAktif, beliDariSaldo, perpanjangDariSaldo, nyalakanSetelahPerpanjang } from '../toko.js';
 import { tutupInvoice } from '../pembayaran.js';
+import { cekNomorTrial } from '../trial.js';
 import { gagal, teks, bulat, nomorWa, rupiah } from '../util.js';
 
 const router = Router();
@@ -22,6 +23,7 @@ export function bentukServer(server, { lengkap = false } = {}) {
     name: server.name,
     phone: server.phone,
     enabled: Boolean(server.enabled),
+    isTrial: Boolean(server.is_trial),
     expired: kedaluwarsa,
     expiresAt: server.expires_at,
     createdAt: server.created_at,
@@ -136,6 +138,8 @@ router.post('/:id/connect', batasHubung, async (req, res) => {
     if (manager.sedangDipairing(login.nomor, server.id)) {
       gagal(409, `Nomor ${login.nomor} sedang dalam proses pairing di server lain.`);
     }
+    // Server trial: nomor harus belum pernah dipakai di situs ini (1 trial/nomor).
+    if (server.is_trial) cekNomorTrial(login.nomor);
   }
 
   // Batalkan percobaan sebelumnya & mulai dari sesi bersih

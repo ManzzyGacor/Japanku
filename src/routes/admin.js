@@ -353,20 +353,57 @@ router.get('/settings', (_req, res) => {
 
 router.put('/settings', (req, res) => {
   const b = req.body ?? {};
-  const qris = teks(b.payment_qris_url, { nama: 'URL gambar QRIS', max: 500, wajib: false });
+  const kini = semuaPengaturan();
+  // Field yang tidak dikirim tetap memakai nilai lama -> update sebagian aman.
+  const ambil = (k) => (b[k] === undefined ? kini[k] : b[k]);
+
+  const qris = teks(ambil('payment_qris_url'), { nama: 'URL gambar QRIS', max: 500, wajib: false });
   if (qris && !/^(https?:\/\/|\/)/i.test(qris)) gagal(400, 'URL gambar QRIS harus diawali https:// atau /');
 
   simpanPengaturan({
-    payment_instructions: teks(b.payment_instructions, { nama: 'Instruksi pembayaran', max: 2000, wajib: false }),
+    payment_instructions: teks(ambil('payment_instructions'), { nama: 'Instruksi pembayaran', max: 2000, wajib: false }),
     payment_qris_url: qris,
-    contact_whatsapp: teks(b.contact_whatsapp, { nama: 'Kontak WhatsApp', max: 20, wajib: false }).replace(/\D/g, ''),
-    min_topup: bulat(b.min_topup, { nama: 'Minimal top up', min: 1000, max: 10_000_000 }),
-    announcement: teks(b.announcement, { nama: 'Pengumuman', max: 500, wajib: false }),
-    qris_fee: bulat(b.qris_fee ?? semuaPengaturan().qris_fee, { nama: 'Biaya admin QRIS', min: 0, max: 50_000 }),
-    qris_min_amount: bulat(b.qris_min_amount ?? semuaPengaturan().qris_min_amount, { nama: 'Minimal pembayaran QRIS', min: 1000, max: 1_000_000 }),
-    manual_topup: b.manual_topup === undefined ? semuaPengaturan().manual_topup : b.manual_topup ? '1' : '0',
+    contact_whatsapp: teks(ambil('contact_whatsapp'), { nama: 'Kontak WhatsApp', max: 20, wajib: false }).replace(/\D/g, ''),
+    min_topup: bulat(ambil('min_topup'), { nama: 'Minimal top up', min: 1000, max: 10_000_000 }),
+    announcement: teks(ambil('announcement'), { nama: 'Pengumuman', max: 500, wajib: false }),
+    qris_fee: bulat(ambil('qris_fee'), { nama: 'Biaya admin QRIS', min: 0, max: 50_000 }),
+    qris_min_amount: bulat(ambil('qris_min_amount'), { nama: 'Minimal pembayaran QRIS', min: 1000, max: 1_000_000 }),
+    manual_topup: b.manual_topup === undefined ? kini.manual_topup : b.manual_topup ? '1' : '0',
+    trial_enabled: b.trial_enabled === undefined ? kini.trial_enabled : b.trial_enabled ? '1' : '0',
+    trial_hours: bulat(ambil('trial_hours'), { nama: 'Lama trial (jam)', min: 1, max: 168 }),
+    trial_requirement: (b.trial_requirement === undefined ? kini.trial_requirement : b.trial_requirement) === 'google' ? 'google' : 'none',
+    trial_max_per_ip_30d: bulat(ambil('trial_max_per_ip_30d'), { nama: 'Batas trial per IP', min: 0, max: 100 }),
+    trial_max_per_device_30d: bulat(ambil('trial_max_per_device_30d'), { nama: 'Batas trial per perangkat', min: 0, max: 100 }),
+    reg_max_per_ip_day: bulat(ambil('reg_max_per_ip_day'), { nama: 'Batas pendaftaran per IP', min: 1, max: 1000 }),
   });
   res.json({ success: true, settings: semuaPengaturan() });
+});
+
+// ---------------------------------------------------------------------------
+// Free trial (Uji Sinyal)
+// ---------------------------------------------------------------------------
+
+router.get('/trial', (req, res) => {
+  const status = ['pending_phone', 'active', 'ended', 'forfeited'].includes(req.query.status) ? req.query.status : null;
+  const rows = db
+    .prepare(
+      `SELECT t.id, t.status, t.phone, t.ip_key, t.device_id, t.email_kunci, t.created_at, t.activated_at,
+              u.name AS user_name, u.email AS user_email, s.name AS server_name, s.expires_at
+       FROM trial_claims t
+       LEFT JOIN users u ON u.id = t.user_id
+       LEFT JOIN servers s ON s.id = t.server_id
+       ${status ? 'WHERE t.status = ?' : ''}
+       ORDER BY t.id DESC LIMIT 200`,
+    )
+    .all(...(status ? [status] : []));
+  res.json({ success: true, claims: rows });
+});
+
+// Izinkan user klaim lagi (false positive): tandai klaim lama 'reset'.
+router.post('/trial/:id/reset', (req, res) => {
+  const hasil = db.prepare("UPDATE trial_claims SET status = 'reset' WHERE id = ? AND status != 'active'").run(Number(req.params.id));
+  if (!hasil.changes) gagal(404, 'Klaim tidak ditemukan, atau sedang aktif (hentikan dulu).');
+  res.json({ success: true });
 });
 
 export default router;

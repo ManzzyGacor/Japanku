@@ -67,6 +67,12 @@ class BotManager {
   constructor() {
     /** @type {Map<number, object>} */
     this.bot = new Map();
+    /**
+     * Hook pairing: diisi server.js untuk mencatat nomor ke ledger & mengaktifkan
+     * trial. Dipanggil (serverId, phone, identity) setelah bind berhasil; kalau
+     * mengembalikan { ok:false, alasan }, bind dibatalkan (nomor bekas untuk trial).
+     */
+    this.onPairing = null;
   }
 
   /** Data runtime satu server (dibuat kalau belum ada) */
@@ -388,6 +394,25 @@ class BotManager {
       this.catat(serverId, `Gagal mengikat nomor: ${error.message}`, 'red');
       rt.message = `Nomor ${phone} sudah dipakai di server lain.`;
       rt.stopRequested = true;
+      rt.child?.send({ t: 'logout' });
+      return;
+    }
+
+    // Hook pairing: catat nomor ke ledger & aktifkan trial. Untuk server trial
+    // yang nomornya ternyata sudah pernah dipakai (lolos pre-check di mode QR),
+    // bind dibatalkan dan bot logout.
+    let hasilHook = { ok: true };
+    try {
+      hasilHook = this.onPairing?.(serverId, phone, '') ?? { ok: true };
+    } catch (error) {
+      this.catat(serverId, `Hook pairing gagal: ${error.message}`, 'red');
+    }
+    if (hasilHook && hasilHook.ok === false) {
+      db.prepare('UPDATE servers SET phone = NULL, enabled = 0 WHERE id = ?').run(serverId);
+      this.catat(serverId, hasilHook.alasan, 'red');
+      rt.message = hasilHook.alasan;
+      rt.stopRequested = true;
+      rt.status = 'stopping';
       rt.child?.send({ t: 'logout' });
       return;
     }
