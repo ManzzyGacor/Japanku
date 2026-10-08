@@ -10,6 +10,8 @@ import {
   pembatas,
   verifikasiTokenGoogle,
 } from '../auth.js';
+import { emailKanonik, cekBatasDaftar, catatDaftar } from '../antiabuse.js';
+import { ipKunci } from '../ip.js';
 import { gagal, teks, email as cekEmail } from '../util.js';
 
 const router = Router();
@@ -17,17 +19,33 @@ const router = Router();
 const batasLogin = pembatas({
   batas: 10,
   jendelaMs: 15 * 60 * 1000,
-  kunci: (req) => `${req.ip}|${String(req.body?.email ?? '').toLowerCase()}`,
+  kunci: (req) => `${ipKunci(req) || `dev:${req.perangkat}`}|${String(req.body?.email ?? '').toLowerCase()}`,
 });
-const batasDaftar = pembatas({ batas: 5, jendelaMs: 60 * 60 * 1000, kunci: (req) => req.ip });
+// Pembatas memori per jam (burst), di atas batas harian persisten di cekBatasDaftar.
+const batasDaftar = pembatas({ batas: 8, jendelaMs: 60 * 60 * 1000, kunci: (req) => ipKunci(req) || `dev:${req.perangkat}` });
 
-function buatAkun({ name, email, passwordHash = null, googleSub = null }) {
-  const role = env.adminEmails.includes(email) ? 'admin' : 'user';
+function buatAkun(req, { name, email, passwordHash = null, googleSub = null }) {
+  const sekarang = Date.now();
+  // Peran admin TIDAK diberikan di sini walau email ada di ADMIN_EMAILS — isAdmin()
+  // baru mengakuinya setelah email terverifikasi (lewat Google). CLI bisa memberi
+  // role 'admin' secara eksplisit.
   const hasil = db
     .prepare(
-      'INSERT INTO users (name, email, password_hash, google_sub, role, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+      `INSERT INTO users (name, email, email_canonical, password_hash, google_sub, role,
+         email_verified_at, signup_ip, signup_device, created_at)
+       VALUES (?, ?, ?, ?, ?, 'user', ?, ?, ?, ?)`,
     )
-    .run(name, email, passwordHash, googleSub, role, Date.now());
+    .run(
+      name,
+      email,
+      emailKanonik(email),
+      passwordHash,
+      googleSub,
+      googleSub ? sekarang : null, // akun Google = email terverifikasi
+      ipKunci(req) || '',
+      req.perangkat || '',
+      sekarang,
+    );
   return db.prepare('SELECT * FROM users WHERE id = ?').get(hasil.lastInsertRowid);
 }
 
@@ -44,8 +62,10 @@ router.post('/register', batasDaftar, async (req, res) => {
   if (db.prepare('SELECT id FROM users WHERE email = ?').get(email)) {
     gagal(409, 'Email sudah terdaftar. Silakan masuk.');
   }
+  cekBatasDaftar(req);
 
-  const user = buatAkun({ name, email, passwordHash: await hashPassword(password) });
+  const user = buatAkun(req, { name, email, passwordHash: await hashPassword(password) });
+  catatDaftar(req);
   buatSesi(req, res, user.id);
   res.status(201).json({ success: true, user: publicUser(user) });
 });
@@ -71,19 +91,40 @@ router.post('/google', batasLogin, async (req, res) => {
   const profil = await verifikasiTokenGoogle(teks(req.body?.credential, { nama: 'Token', max: 5000 }));
   const email = profil.email.toLowerCase();
 
-  let user =
-    db.prepare('SELECT * FROM users WHERE google_sub = ?').get(profil.sub) ??
-    db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+  let user = db.prepare('SELECT * FROM users WHERE google_sub = ?').get(profil.sub);
+  let sandiDihapus = false;
 
   if (!user) {
-    user = buatAkun({ name: profil.name.slice(0, 60), email, googleSub: profil.sub });
-  } else if (!user.google_sub) {
-    db.prepare('UPDATE users SET google_sub = ? WHERE id = ?').run(profil.sub, user.id);
+    const byEmail = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+    if (!byEmail) {
+      cekBatasDaftar(req);
+      user = buatAkun(req, { name: (profil.name || email.split('@')[0]).slice(0, 60), email, googleSub: profil.sub });
+      catatDaftar(req);
+    } else if (byEmail.google_sub && byEmail.google_sub !== profil.sub) {
+      // Email yang sama sudah tertaut ke akun Google lain — jangan ambil alih.
+      gagal(409, 'Email ini sudah tertaut ke akun Google lain.');
+    } else {
+      // Email cocok tapi belum tertaut. Google membuktikan kepemilikan email, jadi
+      // identitas Google-lah pemiliknya. Kalau akun ini punya sandi tapi belum
+      // terverifikasi, HAPUS sandi + semua sesi (anti-ambil-alih) lalu verifikasi.
+      sandiDihapus = Boolean(byEmail.password_hash) && !byEmail.email_verified_at;
+      db.prepare(
+        `UPDATE users SET google_sub = ?, email_verified_at = COALESCE(email_verified_at, ?),
+           password_hash = CASE WHEN email_verified_at IS NULL THEN NULL ELSE password_hash END
+         WHERE id = ?`,
+      ).run(profil.sub, Date.now(), byEmail.id);
+      if (sandiDihapus) db.prepare('DELETE FROM sessions WHERE user_id = ?').run(byEmail.id);
+      user = db.prepare('SELECT * FROM users WHERE id = ?').get(byEmail.id);
+    }
   }
   if (user.banned) gagal(403, 'Akun kamu dinonaktifkan. Hubungi admin.');
 
   buatSesi(req, res, user.id);
-  res.json({ success: true, user: publicUser(user) });
+  res.json({
+    success: true,
+    user: publicUser(user),
+    ...(sandiDihapus ? { message: 'Demi keamanan, kata sandi lama dihapus. Buat sandi baru di halaman Akun kalau mau masuk lewat email.' } : {}),
+  });
 });
 
 router.post('/logout', (req, res) => {

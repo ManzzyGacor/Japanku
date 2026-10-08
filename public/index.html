@@ -2,217 +2,359 @@
 <html lang="id">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>VaresaJasher — Jasa share otomatis ke semua grup WhatsApp</title>
-  <meta name="description" content="Jadikan nomor WhatsApp kamu bot JPM / jasher. Kirim satu pesan ke ratusan grup, AutoJPM 24 jam, whitelist grup, dan push kontak — semua lewat dashboard.">
-  <meta name="theme-color" content="#171226">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#16130F">
+  <title>VaresaJasher — bot JPM &amp; jasher WhatsApp 24 jam</title>
+  <meta name="description" content="Jadikan nomor WhatsApp kamu bot JPM yang menyebar promosi ke banyak grup secara otomatis. Pilih mode dan atur jeda dari dashboard. Coba gratis 24 jam.">
+  <link rel="canonical" href="__BASE_URL__/">
   <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="VaresaJasher">
+  <meta property="og:locale" content="id_ID">
+  <meta property="og:title" content="VaresaJasher — bot JPM &amp; jasher WhatsApp 24 jam">
+  <meta property="og:description" content="Satu pesan, ratusan grup, tanpa begadang. Atur mode dan jeda dari dashboard. Coba gratis 24 jam.">
+  <meta property="og:url" content="__BASE_URL__/">
+  <meta property="og:image" content="__BASE_URL__/assets/img/og/default.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="VaresaJasher — bot JPM & jasher WhatsApp yang jalan 24 jam">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..100,400..900&family=IBM+Plex+Mono:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&display=swap">
   <link rel="stylesheet" href="/assets/css/base.css">
   <link rel="stylesheet" href="/assets/css/landing.css">
 </head>
-<body id="top">
-  <header class="nav">
-    <div class="nav-inner">
-      <a class="brand" href="#top" aria-label="VaresaJasher">
-        <span class="brand-mark">VJ</span>
-        <span class="brand-name">Varesa<b>Jasher</b></span>
-      </a>
+<body>
 
-      <nav class="nav-links" id="navLinks" aria-label="Navigasi utama">
-        <a href="#cara-kerja">Cara kerja</a>
-        <a href="#fitur">Fitur</a>
-        <a href="#harga">Harga</a>
-        <a href="#tanya">Tanya jawab</a>
-        <div class="nav-actions" id="navActions">
-          <a class="btn btn-ghost btn-sm" href="/login">Masuk</a>
-          <a class="btn btn-primary btn-sm" href="/register">Daftar</a>
-        </div>
-      </nav>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-panah" viewBox="0 0 24 24"><path d="M4 12h15M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-dompet" viewBox="0 0 24 24"><path d="M3 6h15v3"/><rect x="3" y="9" width="18" height="11"/><path d="M16 14.5h2"/></symbol>
+  <symbol id="i-jam" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17"/><path d="M12 7.5V12l3.5 2.2"/></symbol>
+  <symbol id="i-atur" viewBox="0 0 24 24"><path d="M4 7h7M15 7h5M4 17h5M13 17h7"/><rect x="11" y="4.5" width="4" height="5"/><rect x="9" y="14.5" width="4" height="5"/></symbol>
+  <symbol id="i-perisai" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></symbol>
+  <symbol id="i-siar" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M4.9 4.9a10 10 0 0 0 0 14.2M19.1 4.9a10 10 0 0 1 0 14.2"/></symbol>
+  <symbol id="i-kunci" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-silang" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+</svg>
 
-      <button class="nav-toggle" id="navToggle" aria-label="Buka menu" aria-expanded="false" aria-controls="navLinks">&#9776;</button>
+<!-- Pita pengumuman disuntik oleh landing.js kalau settings.announcement terisi -->
+
+<div class="masthead"><div class="wrap masthead-in">
+  <span id="dateline">Edisi 07.10.2026</span>
+  <span class="hide-m">Pusat siaran JPM &amp; jasher WhatsApp</span>
+  <span class="onair" id="onair" hidden></span>
+</div></div>
+
+<header class="nav"><div class="wrap nav-in">
+  <a class="merek" href="/" aria-label="VaresaJasher, beranda">
+    <span class="merek-tanda" aria-hidden="true">VJ</span>
+    <span class="merek-teks"><span class="merek-nama">Varesa<b>Jasher</b></span><span class="merek-sub">Pusat siaran JPM</span></span>
+  </a>
+  <nav class="nav-tautan" aria-label="Navigasi utama">
+    <a href="/#mode">Fitur</a><a href="/harga">Harga</a><a href="/panduan">Panduan</a><a href="/faq">FAQ</a>
+  </nav>
+  <div class="nav-aksi" id="navAksi">
+    <a class="btn btn-sekunder btn-s" href="/masuk">Masuk</a>
+    <a class="btn btn-utama btn-s" href="/daftar">Daftar</a>
+  </div>
+  <button class="btn btn-sekunder btn-s btn-ikon nav-menu" id="navMenu" aria-expanded="false" aria-controls="navSheet" aria-label="Buka menu"><svg class="i"><use href="#i-menu"/></svg></button>
+</div></header>
+
+<div class="nav-sheet" id="navSheet" hidden>
+  <div class="nav-sheet-atas">
+    <a class="merek" href="/" aria-label="VaresaJasher, beranda"><span class="merek-tanda" aria-hidden="true">VJ</span><span class="merek-teks"><span class="merek-nama">Varesa<b>Jasher</b></span></span></a>
+    <button class="btn btn-sekunder btn-s btn-ikon" id="navTutup" aria-label="Tutup menu"><svg class="i"><use href="#i-silang"/></svg></button>
+  </div>
+  <nav class="nav-sheet-tautan" aria-label="Navigasi utama">
+    <a href="/#mode">Fitur</a><a href="/harga">Harga</a><a href="/panduan">Panduan</a><a href="/faq">FAQ</a>
+  </nav>
+  <div class="nav-sheet-aksi" id="navSheetAksi">
+    <a class="btn btn-sekunder btn-l" href="/masuk">Masuk</a>
+    <a class="btn btn-utama btn-l" href="/daftar">Daftar gratis</a>
+  </div>
+</div>
+
+<!-- =====================================================================
+     HERO
+     ===================================================================== -->
+<section class="hero" id="top"><div class="wrap hero-grid">
+  <div>
+    <p class="kicker">No. 01 — Meja siaran untuk tukang jasher</p>
+    <h1 class="poster hero-judul">Satu pesan.<br>Ratusan grup.<br><mark>Tanpa begadang.</mark></h1>
+    <p class="hero-lead">Jadikan nomor WhatsApp kamu bot JPM yang siaran 24 jam. Pilih modenya — <b>biasa, tag, otomatis, atau terusan saluran</b> — atur jedanya dari web, lalu biarkan bot bekerja walau HP kamu sedang mati.</p>
+    <div class="hero-cta">
+      <a class="btn btn-utama btn-l" href="/daftar" data-paket="uji">Coba gratis 1 hari <svg class="i"><use href="#i-panah"/></svg></a>
+      <a class="btn btn-sekunder btn-l" href="/harga">Lihat harga</a>
     </div>
-  </header>
-  <div class="nav-scrim" id="navScrim"></div>
+    <p class="hero-mikro" id="heroMikro">Gratis 24 jam untuk 1 server, tanpa isi saldo.</p>
+    <dl class="fakta">
+      <div><dt>8 digit</dt><dd>Tautkan nomor pakai kode pairing, atau scan QR kalau lebih nyaman.</dd></div>
+      <div><dt>4 mode</dt><dd>JPM biasa, tag, otomatis, dan terusan saluran — dari satu dashboard.</dd></div>
+      <div><dt>1 = 1</dt><dd>Satu server, satu nomor. Tambah server kapan saja kamu perlu.</dd></div>
+    </dl>
+  </div>
 
-  <main>
-    <section class="hero">
-      <div class="shell hero-grid">
-        <div>
-          <span class="eyebrow">Bot JPM &middot; Jasa share &middot; 24 jam</span>
-          <h1>Satu pesan, sampai ke <em>semua grup</em> WhatsApp kamu.</h1>
-          <p class="hero-lead measure">
-            VaresaJasher menjadikan nomor WhatsApp kamu bot JPM. Ketik <code>jpm</code> sekali, bot menyebarkan
-            promosi ke seluruh grup dengan jeda aman, lalu AutoJPM mengulanginya terus walau HP kamu mati.
-          </p>
-          <div class="hero-cta">
-            <a class="btn btn-primary btn-lg" href="/register">Buat akun</a>
-            <a class="btn btn-ghost btn-lg" href="#cara-kerja">Lihat cara kerjanya</a>
-          </div>
-          <div class="hero-points">
-            <div><b>Tanpa scan QR</b><span>Tautkan pakai pairing code 8 digit.</span></div>
-            <div><b>Jalan di server kami</b><span>Bot tetap aktif 24 jam, tanpa panel.</span></div>
-            <div><b>Banyak server</b><span>Beli sesuai kebutuhan, 1 server untuk 1 nomor.</span></div>
-          </div>
-        </div>
-
-        <div class="chat" aria-hidden="true">
-          <div class="chat-head">
-            <span class="brand-mark">VJ</span>
-            <div><b>Bot Jualan</b><small>&#9679; online</small></div>
-          </div>
-          <div class="chat-body">
-            <div class="bubble bubble-me"><code>.jpm</code> PROMO HARI INI!
-Akun premium mulai 5rb, order chat admin ya.<small>09.41</small></div>
-            <div class="bubble bubble-bot">Memproses pengiriman pesan, harap tunggu...<small>09.41</small></div>
-            <div class="bubble bubble-bot"><span class="ok">&#10004;</span> Pesan selesai dikirim ke <b>48</b> dari <b>50</b> grup.<small>09.54</small></div>
-            <div class="bubble bubble-me"><code>.autojpm</code><small>09.55</small></div>
-            <div class="bubble bubble-bot">&#9654;&#65039; Memulai AutoJPM ...
-Diulang terus sampai kamu ketik <code>autojpm stop</code>.<small>09.55</small></div>
-          </div>
+  <div class="hero-kanan" aria-hidden="true">
+    <article class="slip">
+      <header class="slip-kop"><span>Slip siaran</span><span>No. 0281</span></header>
+      <div class="slip-isi">
+        <dl class="baris-titik">
+          <div><dt>Mode</dt><dd>Auto JPM Channel</dd></div>
+          <div><dt>Saluran</dt><dd>Lapak Manzzy Official</dd></div>
+          <div><dt>Ulang</dt><dd>tiap 30 menit</dd></div>
+          <div><dt>Jeda</dt><dd>6 detik / grup</dd></div>
+          <div><dt>Sasaran</dt><dd>50 grup · 3 dilewati</dd></div>
+        </dl>
+        <div class="terusan">
+          <span class="terusan-label">↪ Diteruskan dari saluran</span>
+          <p><b>Open jasa share 24 jam</b><br>100+ grup aktif, mulai 5rb/hari. Slot terbatas, langsung chat admin.</p>
         </div>
       </div>
-    </section>
+      <div class="sobek"></div>
+      <footer class="slip-stub">
+        <div><span class="kicker">Putaran berikut</span><b class="slip-jam">10.24</b></div>
+        <div class="slip-no">#12<small>putaran</small></div>
+      </footer>
+      <div class="cap slip-cap">Terkirim<small>48/50 grup · 09.54</small></div>
+    </article>
+  </div>
+</div></section>
 
-    <section class="section" id="cara-kerja">
-      <div class="shell">
-        <div class="section-head">
-          <h2>Tiga langkah sampai bot menyebar</h2>
-          <p class="measure">Rata-rata selesai di bawah dua menit, selama nomor kamu bisa menerima kode dari WhatsApp.</p>
-        </div>
-        <div class="steps">
-          <article class="card step">
-            <div class="step-num">1</div>
-            <h3>Beli server</h3>
-            <p>Isi saldo, pilih paket, dan server bot langsung jadi. Butuh beberapa nomor? Beli beberapa server.</p>
-            <div class="step-demo">Server 1 &middot; Bulanan &middot; aktif</div>
-          </article>
-          <article class="card step">
-            <div class="step-num">2</div>
-            <h3>Tautkan nomor</h3>
-            <p>Masukkan nomor di dashboard. Kode pairing muncul, ketik di WhatsApp &rsaquo; Perangkat tertaut &rsaquo; Tautkan dengan nomor telepon.</p>
-            <div class="step-demo code">K7F2-9QLM</div>
-          </article>
-          <article class="card step">
-            <div class="step-num">3</div>
-            <h3>Kirim perintah</h3>
-            <p>Dari chat WhatsApp kamu sendiri, ketik <code>.jpm pesan</code> atau <code>.autojpm</code>. Bot mengerjakan sisanya.</p>
-            <div class="step-demo">.jpm Open order hari ini!</div>
-          </article>
-        </div>
-      </div>
-    </section>
+<!-- =====================================================================
+     TICKER (nama grup FIKTIF; dibangun landing.js)
+     ===================================================================== -->
+<div class="wrap">
+  <div class="ticker" id="ticker" aria-hidden="true">
+    <span class="ticker-label"><i></i><span>Baru terkirim</span></span>
+    <div class="ticker-jalur"><div class="ticker-trek" id="tickerTrek"></div></div>
+  </div>
+</div>
 
-    <section class="section" id="fitur">
-      <div class="shell">
-        <div class="section-head">
-          <h2>Semua yang dibutuhkan tukang jasher</h2>
-          <p class="measure">Fitur lengkap dari script JPM yang sudah teruji, tanpa perlu sewa panel atau menyentuh file konfigurasi.</p>
-        </div>
-        <div class="features">
-          <article class="card feature">
-            <h3>JPM <code>jpm</code></h3>
-            <p>Kirim teks atau gambar ke semua grup sekaligus, satu per satu dengan jeda yang bisa kamu atur.</p>
-          </article>
-          <article class="card feature">
-            <h3>JPM Tag <code>jpmtag</code></h3>
-            <p>Sama seperti JPM, tapi semua anggota grup ikut ditandai supaya pesan kamu lebih terlihat.</p>
-          </article>
-          <article class="card feature">
-            <h3>AutoJPM <code>autojpm</code></h3>
-            <p>Simpan beberapa postingan (lengkap dengan badge channel), lalu bot menyebarkannya berulang tanpa henti.</p>
-          </article>
-          <article class="card feature">
-            <h3>Autoreply <code>autoreply</code></h3>
-            <p>Balas otomatis ke grup yang sedang ramai, jadi promosi kamu muncul saat orang sedang membaca.</p>
-          </article>
-          <article class="card feature">
-            <h3>Whitelist grup <code>addwhitelist</code></h3>
-            <p>Tandai grup yang tidak boleh dikirimi, misalnya grup keluarga atau grup kantor.</p>
-          </article>
-          <article class="card feature">
-            <h3>Push kontak <code>pushkontak</code></h3>
-            <p>Kirim pesan pribadi ke anggota sebuah grup. Gunakan seperlunya, fitur ini paling berisiko.</p>
-          </article>
-          <article class="card feature">
-            <h3>Terminal langsung</h3>
-            <p>Lihat log bot waktu nyata dari dashboard: kode pairing, grup yang dikirimi, sampai koneksi putus.</p>
-          </article>
-          <article class="card feature">
-            <h3>Mode uji coba</h3>
-            <p>Coba alurnya tanpa risiko: pesan massal hanya dicatat di terminal, tidak benar-benar dikirim.</p>
-          </article>
-          <article class="card feature">
-            <h3>Pengaturan dari web</h3>
-            <p>Jeda kirim, prefix, nama bot, owner tambahan, sampai jeda AutoJPM, semua diatur dari dashboard.</p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <section class="section" id="harga">
-      <div class="shell">
-        <div class="section-head">
-          <h2>Harga per server</h2>
-          <p class="measure">Satu server untuk satu nomor WhatsApp, dengan semua fitur. Perlu lebih banyak nomor? Tinggal beli server lagi.</p>
-        </div>
-        <div class="prices" id="priceList">
-          <article class="card price"><p class="muted">Memuat paket...</p></article>
-        </div>
-        <p class="prices-note">Bayar pakai saldo. Isi saldo lewat e-wallet, QRIS, atau transfer bank dari menu Saldo di dashboard.</p>
-      </div>
-    </section>
-
-    <section class="section" id="tanya">
-      <div class="shell">
-        <div class="section-head"><h2>Tanya jawab</h2></div>
-        <div class="faq">
-          <div class="faq-item">
-            <button class="faq-q" aria-expanded="false">Apa itu JPM atau jasher?</button>
-            <div class="faq-a">JPM (jasa promosi massal) atau jasher (jasa share) adalah cara menyebarkan satu pesan promosi ke banyak grup WhatsApp sekaligus. VaresaJasher melakukannya otomatis dari nomor kamu sendiri, ke grup-grup yang sudah kamu ikuti.</div>
-          </div>
-          <div class="faq-item">
-            <button class="faq-q" aria-expanded="false">Bagaimana cara mengaktifkan botnya?</button>
-            <div class="faq-a">Beli server, buka halamannya di dashboard, masukkan nomor WhatsApp, lalu tekan Hubungkan. Setelah kode pairing muncul, buka WhatsApp, masuk ke <b>Perangkat tertaut</b>, pilih <b>Tautkan dengan nomor telepon saja</b>, lalu ketik kodenya.</div>
-          </div>
-          <div class="faq-item">
-            <button class="faq-q" aria-expanded="false">Kenapa 1 server hanya untuk 1 nomor?</button>
-            <div class="faq-a">Setiap server menjalankan satu bot terpisah dengan sesi, whitelist, dan daftar AutoJPM sendiri. Supaya tidak bentrok, satu nomor hanya bisa terhubung ke satu server. Mau pakai beberapa nomor? Beli beberapa server, tidak ada batasnya.</div>
-          </div>
-          <div class="faq-item">
-            <button class="faq-q" aria-expanded="false">Boleh pakai nomor WhatsApp utama?</button>
-            <div class="faq-a">Boleh, tapi sebaiknya jangan. WhatsApp bisa membatasi atau memblokir nomor yang mengirim banyak pesan otomatis. Pakai nomor cadangan khusus jualan, dan naikkan jeda kirim kalau grupnya banyak.</div>
-          </div>
-          <div class="faq-item">
-            <button class="faq-q" aria-expanded="false">Bagaimana cara membayarnya?</button>
-            <div class="faq-a">Isi saldo dari menu Saldo di dashboard (e-wallet, QRIS, atau transfer bank). Setelah saldo masuk, kamu bisa membeli atau memperpanjang server kapan saja.</div>
-          </div>
-          <div class="faq-item">
-            <button class="faq-q" aria-expanded="false">Bot saya tiba-tiba mati, kenapa?</button>
-            <div class="faq-a">Biasanya karena sesi WhatsApp terputus: logout dari HP, perangkat tertaut dihapus, atau masa aktif server habis. Buka dashboard, perpanjang kalau perlu, lalu hubungkan ulang nomor kamu untuk mendapat kode pairing baru.</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="section cta">
-      <div class="shell">
-        <h2>Siap menyebar promosi hari ini?</h2>
-        <p>Buat akun, beli server, tautkan nomor, dan kirim JPM pertama kamu dalam hitungan menit.</p>
-        <a class="btn btn-primary btn-lg" href="/register">Buat akun gratis</a>
-      </div>
-    </section>
-  </main>
-
-  <footer class="footer">
-    <div class="shell">
-      <span>&copy; <span id="tahun">2026</span> VaresaJasher. Semua hak dilindungi.</span>
-      <span>Dikelola oleh <a href="https://www.instagram.com/manzz_wakeup" target="_blank" rel="noopener">@ManzzyID</a></span>
+<!-- =====================================================================
+     TRUST STRIP
+     ===================================================================== -->
+<section class="seksi" id="fakta"><div class="wrap">
+  <h2 class="sr">Kenapa VaresaJasher</h2>
+  <p class="kicker" style="margin-bottom:22px">Kenapa pilih kami</p>
+  <div class="sorot">
+    <div class="sorot-sel">
+      <span class="tanda" aria-hidden="true"><svg class="i"><use href="#i-dompet"/></svg></span>
+      <h3>Bayar pakai QRIS</h3>
+      <p>GoPay, OVO, DANA, ShopeePay, atau m-banking. Saldo masuk otomatis begitu pembayaran terkonfirmasi.</p>
     </div>
-  </footer>
+    <div class="sorot-sel">
+      <span class="tanda" aria-hidden="true"><svg class="i"><use href="#i-jam"/></svg></span>
+      <h3>Coba dulu, baru bayar</h3>
+      <p>Trial 24 jam dengan semua mode JPM, supaya kamu bisa lihat sendiri hasilnya sebelum isi saldo.</p>
+    </div>
+    <div class="sorot-sel">
+      <span class="tanda" aria-hidden="true"><svg class="i"><use href="#i-atur"/></svg></span>
+      <h3>Kamu yang pegang kendali</h3>
+      <p>Jeda kirim, interval, dan whitelist bisa diatur sendiri sesuai kondisi nomor kamu.</p>
+    </div>
+    <div class="sorot-sel">
+      <span class="tanda" aria-hidden="true"><svg class="i"><use href="#i-perisai"/></svg></span>
+      <h3>Data tidak dijual</h3>
+      <p>Sesi WhatsApp disimpan di server kami dan hanya dipakai untuk menjalankan bot kamu.</p>
+    </div>
+  </div>
+</div></section>
 
-  <script type="module" src="/assets/js/landing.js"></script>
+<!-- =====================================================================
+     CARA KERJA
+     ===================================================================== -->
+<section class="seksi" id="cara-kerja"><div class="wrap">
+  <div class="kepala-seksi">
+    <div><p class="kicker">Tiga langkah</p><h2 class="poster h2">Sampai bot<br>mulai siaran</h2></div>
+    <p class="dek">Kebanyakan orang selesai dalam beberapa menit — asal nomor kamu bisa membuka WhatsApp di HP.</p>
+  </div>
+  <ol class="langkah langkah-baris">
+    <li><div><b>Buat server</b><p>Daftar, lalu mulai trial gratis atau pilih paket Antena, Menara, atau Satelit. Servernya langsung siap.</p></div></li>
+    <li><div><b>Tautkan nomor</b><p>Masukkan nomor di dashboard, lalu ketik kode pairing di WhatsApp &rsaquo; Perangkat tertaut &rsaquo; Tautkan dengan nomor telepon saja.</p></div></li>
+    <li><div><b>Mulai siaran</b><p>Tulis pesan di Meja kirim, pilih mode dan jedanya, lalu tekan Mulai. Atau ketik perintah seperti <code class="perintah">.jpm</code> langsung dari chat.</p></div></li>
+  </ol>
+</div></section>
+
+<!-- =====================================================================
+     MODE JPM
+     ===================================================================== -->
+<section class="seksi" id="mode"><div class="wrap">
+  <div class="kepala-seksi">
+    <div><p class="kicker">Rubrik siaran</p><h2 class="poster h2">Cara<br>menyebar</h2></div>
+    <p class="dek">Empat mode JPM siap pakai, satu lagi segera menyusul. Semua diatur dari dashboard atau lewat perintah chat — grup di <i>whitelist</i> selalu dilewati.</p>
+  </div>
+  <div class="mode-grup" aria-hidden="true">
+    <span class="grup-label grup-sekali">Sekali kirim</span>
+    <span class="grup-label grup-ulang">Berulang otomatis</span>
+  </div>
+  <ol class="kolom-mode">
+    <li>
+      <span class="mode-no">01</span>
+      <h3>JPM biasa</h3>
+      <code class="perintah">.jpm</code>
+      <p>Kirim teks atau gambar sekali ke semua grup, satu per satu dengan jeda yang kamu tentukan.</p>
+    </li>
+    <li>
+      <span class="mode-no">02</span>
+      <h3>JPM tag</h3>
+      <code class="perintah">.jpmtag</code>
+      <p>Seperti JPM biasa, tapi semua anggota grup ikut ter-tag tanpa daftar nama yang memenuhi layar.</p>
+    </li>
+    <li>
+      <span class="mode-no">03</span>
+      <h3>JPM SW Grup</h3>
+      <span class="chip-segera">Segera</span>
+      <p>Pasang promosi sebagai status di tiap grup, muncul di lingkaran status — tidak menumpuk di chat.</p>
+    </li>
+    <li>
+      <span class="mode-no">04</span>
+      <h3>Auto JPM</h3>
+      <code class="perintah">.autojpm</code>
+      <p>Simpan beberapa postingan, lalu bot mengirim ulang otomatis setiap sekian menit sampai kamu hentikan.</p>
+    </li>
+    <li class="nyala">
+      <span class="mode-no">05</span>
+      <h3>Auto JPM Channel</h3>
+      <code class="perintah">.autojpm</code>
+      <p>Teruskan postingan saluran WhatsApp kamu ke semua grup lengkap dengan label <i>Diteruskan dari saluran</i>, lalu ulang otomatis.</p>
+    </li>
+  </ol>
+  <p class="mode-tautan"><a href="/panduan#mode-jpm">Pelajari tiap mode di Panduan <svg class="i"><use href="#i-panah"/></svg></a></p>
+</div></section>
+
+<!-- =====================================================================
+     HARGA (teaser; kartu dari /api/packages)
+     ===================================================================== -->
+<section class="seksi seksi-garis" id="harga" style="padding-top:64px"><div class="wrap">
+  <div class="kepala-seksi">
+    <div><p class="kicker">Tiket siaran</p><h2 class="poster h2">Harga per<br>server</h2></div>
+    <p class="dek">Satu server untuk satu nomor WhatsApp, berlaku 30 hari. Semua mode JPM sudah termasuk di tiap paket — yang beda cuma kapasitasnya.</p>
+  </div>
+  <div class="tiket-grid" id="daftarHarga">
+    <p class="memuat">Memuat harga<span class="kursor"></span></p>
+  </div>
+  <div id="pitaTrial"></div>
+  <p class="catatan-harga"><span class="qris-tag">QRIS</span><span>Bayar pakai saldo. Isi saldo lewat QRIS otomatis — saldo masuk begitu pembayaran terkonfirmasi.</span></p>
+  <p class="harga-tautan"><a href="/harga">Bandingkan semua paket <svg class="i"><use href="#i-panah"/></svg></a></p>
+</div></section>
+
+<!-- =====================================================================
+     KEAMANAN NOMOR
+     ===================================================================== -->
+<section class="seksi" id="keamanan"><div class="wrap">
+  <div class="aman-grid">
+    <div class="aman-teks">
+      <p class="kicker">Jujur soal risiko</p>
+      <h2 class="poster h2" style="margin-top:8px">Nomor bisa<br>dibatasi WhatsApp</h2>
+      <div class="catatan catatan-peringatan">
+        <svg class="i"><use href="#i-perisai"/></svg>
+        <span>Mengirim pesan otomatis ke banyak grup selalu punya risiko. WhatsApp bisa membatasi atau memblokir nomor yang dianggap spam, dan tidak ada layanan JPM mana pun — termasuk kami — yang bisa menjamin nomor kamu aman. Yang bisa kami lakukan: memberi kamu kendali penuh atas kecepatan kirim, dan membagikan kebiasaan yang umumnya mengurangi risiko.</span>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<!-- =====================================================================
+     TANYA JAWAB (teaser)
+     ===================================================================== -->
+<section class="seksi" id="faq"><div class="wrap">
+  <div class="kepala-seksi">
+    <div><p class="kicker">Tanya jawab</p><h2 class="poster h2">Yang sering<br>ditanyakan</h2></div>
+    <p class="dek">Belum ketemu jawabannya? Cek <i>Panduan</i> atau hubungi kami lewat halaman bantuan.</p>
+  </div>
+  <div class="faq">
+    <details id="apa-itu-jpm">
+      <summary><span class="tanda" aria-hidden="true"></span>Apa itu JPM atau jasher?</summary>
+      <div class="jawab">JPM (jasa promosi massal) atau jasher (jasa share) adalah cara menyebarkan satu pesan promosi ke banyak grup WhatsApp sekaligus. Di VaresaJasher, pesan dikirim dari nomor kamu sendiri dan hanya ke grup yang sudah diikuti nomor itu. Kami tidak menyediakan daftar grup atau nomor orang lain.</div>
+    </details>
+    <details id="nomor-diblokir">
+      <summary><span class="tanda" aria-hidden="true"></span>Apakah nomor saya bisa diblokir WhatsApp?</summary>
+      <div class="jawab">Bisa. Ketentuan Layanan WhatsApp tidak mengizinkan pesan massal dan otomatisasi tidak resmi, jadi nomor yang dipakai JPM selalu berisiko dibatasi atau diblokir. Tidak ada layanan JPM yang bisa menjamin nomor aman, termasuk kami. Risikonya bisa dikurangi: pakai nomor khusus jualan, beri jeda yang longgar, dan kirim hanya ke grup yang membolehkan promosi.</div>
+    </details>
+    <details id="cara-trial">
+      <summary><span class="tanda" aria-hidden="true"></span>Bagaimana cara mencoba gratis?</summary>
+      <div class="jawab">Daftar akun, buka <b>Beli server</b>, lalu pilih <b>Trial gratis</b>. Kamu dapat 1 server selama 24 jam dengan semua mode JPM, hingga 20 grup per putaran, dan 1 postingan Auto JPM. Tidak perlu isi saldo.</div>
+    </details>
+    <details id="cara-bayar">
+      <summary><span class="tanda" aria-hidden="true"></span>Bagaimana cara membayar?</summary>
+      <div class="jawab">Isi saldo lewat QRIS dari menu <b>Saldo</b> di dashboard. QRIS bisa dibayar pakai GoPay, OVO, DANA, ShopeePay, LinkAja, atau aplikasi m-banking yang mendukung QRIS. Saldo masuk otomatis begitu pembayaran terkonfirmasi. Setelah itu kamu bisa membeli atau memperpanjang server dari saldo.</div>
+    </details>
+    <details id="hp-harus-online">
+      <summary><span class="tanda" aria-hidden="true"></span>Apakah HP saya harus selalu online?</summary>
+      <div class="jawab">Tidak. Bot berjalan sebagai perangkat tertaut, jadi tetap bekerja walau HP kamu mati atau tanpa internet. Satu catatan dari WhatsApp: buka WhatsApp di HP minimal sekali setiap 14 hari. Kalau HP tidak aktif lebih lama dari itu, WhatsApp otomatis mengeluarkan semua perangkat tertaut, termasuk bot kamu.</div>
+    </details>
+  </div>
+  <p class="faq-tautan"><a href="/faq">Lihat semua pertanyaan <svg class="i"><use href="#i-panah"/></svg></a></p>
+</div></section>
+
+<!-- =====================================================================
+     AJAKAN TERAKHIR
+     ===================================================================== -->
+<section class="cta"><div class="wrap">
+  <div class="cta-panel">
+    <h2>Siap siaran <mark>hari ini?</mark></h2>
+    <p>Buat akun gratis, tautkan nomor, dan kirim JPM pertama kamu dalam hitungan menit. Trial 24 jam, tanpa isi saldo.</p>
+    <div class="cta-aksi">
+      <a class="btn btn-utama btn-l" href="/daftar" data-paket="uji">Coba gratis 1 hari <svg class="i"><use href="#i-panah"/></svg></a>
+      <a class="btn btn-sekunder btn-l" href="/harga">Lihat harga</a>
+    </div>
+  </div>
+</div></section>
+
+<!-- =====================================================================
+     FOOTER
+     ===================================================================== -->
+<footer class="kaki"><div class="wrap">
+  <div class="kaki-atas">
+    <div class="kaki-merek">
+      <a class="merek" href="/" aria-label="VaresaJasher, beranda"><span class="merek-tanda" aria-hidden="true">VJ</span><span class="merek-teks"><span class="merek-nama">Varesa<b>Jasher</b></span></span></a>
+      <p>Bot JPM &amp; jasher WhatsApp yang jalan 24 jam, diatur dari web.</p>
+    </div>
+    <div class="kaki-kol">
+      <h4>Produk</h4>
+      <ul>
+        <li><a href="/#mode">Mode JPM</a></li>
+        <li><a href="/harga">Harga</a></li>
+        <li><a href="/panduan">Panduan</a></li>
+        <li><a href="/status">Status layanan</a></li>
+      </ul>
+    </div>
+    <div class="kaki-kol">
+      <h4>Bantuan</h4>
+      <ul>
+        <li><a href="/faq">FAQ</a></li>
+        <li><a href="/bantuan">Bantuan &amp; kontak</a></li>
+        <li><a href="/panduan#tautkan-nomor">Cara menautkan nomor</a></li>
+        <li><a href="/bantuan#lapor">Laporkan penyalahgunaan</a></li>
+      </ul>
+    </div>
+    <div class="kaki-kol">
+      <h4>Legal</h4>
+      <ul>
+        <li><a href="/syarat">Syarat &amp; Ketentuan</a></li>
+        <li><a href="/privasi">Kebijakan Privasi</a></li>
+        <li><a href="/syarat#pengembalian-dana">Pengembalian dana</a></li>
+      </ul>
+    </div>
+    <div class="kaki-kol">
+      <h4>Akun</h4>
+      <ul>
+        <li><a href="/masuk">Masuk</a></li>
+        <li><a href="/daftar">Daftar gratis</a></li>
+        <li><a href="/dashboard">Dashboard</a></li>
+      </ul>
+    </div>
+  </div>
+  <p class="kaki-sangkalan">VaresaJasher adalah layanan independen dan tidak berafiliasi dengan, didukung, atau disponsori oleh WhatsApp LLC maupun Meta Platforms, Inc. WhatsApp adalah merek dagang milik pemiliknya.</p>
+  <div class="kaki-bawah">
+    <span>&copy; <span id="tahun">2026</span> VaresaJasher · saudara JadiVaresa (varesa.mom)</span>
+    <span>Dikelola oleh <a href="https://www.instagram.com/manzz_wakeup" target="_blank" rel="noopener">@ManzzyID</a></span>
+  </div>
+</div></footer>
+
+<script type="module" src="/assets/js/landing.js"></script>
 </body>
 </html>

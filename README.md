@@ -28,7 +28,7 @@ Dikirim dari chat WhatsApp nomor bot itu sendiri (misalnya chat ke diri sendiri)
 nomor *owner tambahan* yang diatur di dashboard. Awali dengan prefix, contoh `.menu`.
 
 `menu`, `ping`, `listgc`, `jpm <pesan>`, `jpmtag <pesan>`, `autojpm`, `autojpm list|stop|del`,
-`autoreply <pesan>|stop`, `pushkontak <ID_Grup> <pesan>`, `whitelist`, `addwhitelist`,
+`autoreply <pesan>|stop`, `whitelist`, `addwhitelist`,
 `delwhitelist`, `resetdata`.
 
 ## Instalasi (VPS)
@@ -128,7 +128,6 @@ Cadangkan folder `storage/` secara berkala — isinya database dan sesi WhatsApp
 
 - Pakai nomor cadangan khusus jualan, bukan nomor utama.
 - Naikkan *jeda kirim* kalau grupnya banyak (default 15 detik).
-- `pushkontak` paling berisiko (japri ke orang asing) — pakai seperlunya.
 - Coba dulu dengan mode *Uji coba* di pengaturan bot.
 
 ## Kredit

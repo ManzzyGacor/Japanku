@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="id">
+<!-- DRAF: belum ditinjau pemilik -->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#16130F">
+  <title>Kebijakan Privasi — VaresaJasher</title>
+  <meta name="description" content="Data apa saja yang dikumpulkan VaresaJasher, untuk apa dipakai, berapa lama disimpan, dengan siapa dibagikan, dan cara kamu meminta akses atau penghapusan.">
+  <link rel="canonical" href="__BASE_URL__/privasi">
+  <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="VaresaJasher">
+  <meta property="og:locale" content="id_ID">
+  <meta property="og:title" content="Kebijakan Privasi">
+  <meta property="og:description" content="Data apa saja yang dikumpulkan VaresaJasher, untuk apa dipakai, berapa lama disimpan, dengan siapa dibagikan, dan cara kamu meminta akses atau penghapusan.">
+  <meta property="og:url" content="__BASE_URL__/privasi">
+  <meta property="og:image" content="__BASE_URL__/assets/img/og/default.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="VaresaJasher — bot JPM & jasher WhatsApp yang jalan 24 jam">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..100,400..900&family=IBM+Plex+Mono:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&display=swap">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/landing.css">
+  <style>
+    .laman-kepala { padding: 52px 0 6px; }
+    .laman-kepala .kicker { margin-bottom: 14px; }
+    .laman-kepala h1 { font-size: clamp(38px, 6vw, 62px); }
+    .laman-kepala .berlaku { margin-top: 14px; font-family: var(--f-mesin); font-size: 13px; color: var(--tinta-3); letter-spacing: .04em; }
+
+    .dok { max-width: 760px; padding-top: 10px; }
+    .dok > .intro { margin-top: 20px; font-size: 16px; line-height: 1.7; color: var(--tinta-2); }
+    .dok .intro a, .dok p a, .dok li a { color: var(--tinta); font-weight: 600; text-underline-offset: 3px; }
+    .dok .pengendali { margin-top: 14px; font-size: 15px; line-height: 1.6; color: var(--tinta-2); border-left: 6px solid var(--tinta); background: var(--kertas); padding: 12px 14px; }
+    .dok .pengendali b { color: var(--tinta); }
+    .dok h2 { margin-top: 40px; padding-bottom: 8px; border-bottom: var(--tipis) solid var(--tinta); font-stretch: 80%; font-weight: 800; font-size: 21px; text-transform: uppercase; letter-spacing: .02em; line-height: 1.1; scroll-margin-top: 20px; }
+    .dok h3 { margin-top: 20px; font-stretch: 85%; font-weight: 700; font-size: 16px; text-transform: none; }
+    .dok p { margin-top: 12px; font-size: 16px; line-height: 1.7; color: var(--tinta-2); }
+    .dok p b, .dok li b { color: var(--tinta); font-weight: 600; }
+    .dok ul { list-style: none; margin-top: 12px; }
+    .dok ul li { position: relative; padding-left: 20px; margin-top: 8px; font-size: 16px; line-height: 1.65; color: var(--tinta-2); }
+    .dok ul li::before { content: "—"; position: absolute; left: 0; color: var(--tinta-3); }
+    .dok .ringkas { margin-top: 16px; border-left: 6px solid var(--tinta); background: var(--kertas); padding: 14px 16px; }
+    .dok .ringkas b { color: var(--tinta); }
+    .dok .ringkas ul { margin-top: 8px; }
+    mark.isi { background: var(--sinyal-pucat); padding: 0 3px; font-weight: 600; color: var(--tinta); box-decoration-break: clone; }
+    .draf-note { margin-top: 30px; }
+    .dok-kontak { font-family: var(--f-mesin); font-size: 14px; }
+
+    /* Tabel di dalam dokumen (geser kalau sempit) */
+    .dok-tabel-gulir { overflow-x: auto; border: var(--tipis) solid var(--tinta); margin-top: 14px; -webkit-overflow-scrolling: touch; }
+    .dok-tabel { width: 100%; min-width: 520px; border-collapse: collapse; }
+    .dok-tabel th, .dok-tabel td { padding: 10px 13px; text-align: left; vertical-align: top; border-bottom: 1.5px solid var(--garis-halus); font-size: 14px; line-height: 1.5; }
+    .dok-tabel thead th { background: var(--tinta); color: var(--kertas); font-family: var(--f-mesin); font-size: 11.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+    .dok-tabel tbody th { font-weight: 600; color: var(--tinta); }
+    .dok-tabel td { color: var(--tinta-2); }
+    .dok-tabel tbody tr:last-child th, .dok-tabel tbody tr:last-child td { border-bottom: 0; }
+
+    @media (max-width: 760px) { .laman-kepala { padding: 30px 0 4px; } }
+  </style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-panah" viewBox="0 0 24 24"><path d="M4 12h15M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-silang" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 16.5h.01"/></symbol>
+</svg>
+
+<div class="masthead"><div class="wrap masthead-in">
+  <span id="dateline">Edisi 07.10.2026</span>
+  <span class="hide-m">Pusat siaran JPM &amp; jasher WhatsApp</span>
+  <span class="onair" id="onair" hidden></span>
+</div></div>
+
+<header class="nav"><div class="wrap nav-in">
+  <a class="merek" href="/" aria-label="VaresaJasher, beranda">
+    <span class="merek-tanda" aria-hidden="true">VJ</span>
+    <span class="merek-teks"><span class="merek-nama">Varesa<b>Jasher</b></span><span class="merek-sub">Pusat siaran JPM</span></span>
+  </a>
+  <nav class="nav-tautan" aria-label="Navigasi utama">
+    <a href="/#mode">Fitur</a><a href="/harga">Harga</a><a href="/panduan">Panduan</a><a href="/faq">FAQ</a>
+  </nav>
+  <div class="nav-aksi" id="navAksi">
+    <a class="btn btn-sekunder btn-s" href="/masuk">Masuk</a>
+    <a class="btn btn-utama btn-s" href="/daftar">Daftar</a>
+  </div>
+  <button class="btn btn-sekunder btn-s btn-ikon nav-menu" id="navMenu" aria-expanded="false" aria-controls="navSheet" aria-label="Buka menu"><svg class="i"><use href="#i-menu"/></svg></button>
+</div></header>
+
+<div class="nav-sheet" id="navSheet" hidden>
+  <div class="nav-sheet-atas">
+    <a class="merek" href="/" aria-label="VaresaJasher, beranda"><span class="merek-tanda" aria-hidden="true">VJ</span><span class="merek-teks"><span class="merek-nama">Varesa<b>Jasher</b></span></span></a>
+    <button class="btn btn-sekunder btn-s btn-ikon" id="navTutup" aria-label="Tutup menu"><svg class="i"><use href="#i-silang"/></svg></button>
+  </div>
+  <nav class="nav-sheet-tautan" aria-label="Navigasi utama">
+    <a href="/#mode">Fitur</a><a href="/harga">Harga</a><a href="/panduan">Panduan</a><a href="/faq">FAQ</a>
+  </nav>
+  <div class="nav-sheet-aksi" id="navSheetAksi">
+    <a class="btn btn-sekunder btn-l" href="/masuk">Masuk</a>
+    <a class="btn btn-utama btn-l" href="/daftar">Daftar gratis</a>
+  </div>
+</div>
+
+<main>
+<section class="seksi laman-kepala"><div class="wrap">
+  <p class="kicker">Legal</p>
+  <h1 class="poster">Kebijakan Privasi</h1>
+  <p class="berlaku">Berlaku sejak <mark class="isi">{{TANGGAL_BERLAKU}}</mark></p>
+</div></section>
+
+<div class="wrap">
+<div class="catatan catatan-peringatan draf-note" role="note">
+  <svg class="i"><use href="#i-info"/></svg>
+  <span><b>Draf — tinjau sebelum publikasi.</b> Dokumen ini masih draf dan wajib ditinjau pengelola (sebaiknya juga konsultan hukum) sebelum dipublikasikan. Pastikan bagian 1.4 dan 4 sesuai fitur yang benar-benar aktif, dan isi bagian bertanda kuning seperti <mark class="isi">{{NAMA_PENGELOLA}}</mark>.</span>
+</div>
+
+<article class="dok">
+  <p class="intro">Kebijakan ini menjelaskan data pribadi apa yang kami kumpulkan saat kamu memakai VaresaJasher, untuk apa data itu dipakai, berapa lama disimpan, dengan siapa dibagikan, dan apa saja hakmu. Kami berupaya mematuhi Undang-Undang Nomor 27 Tahun 2022 tentang Pelindungan Data Pribadi.</p>
+
+  <p class="pengendali"><b>Pengendali data:</b> <mark class="isi">{{NAMA_PENGELOLA}}</mark>, pengelola VaresaJasher, <mark class="isi">{{KOTA_DOMISILI}}</mark>, Indonesia. Kontak: __KONTAK_EMAIL__.</p>
+
+  <div class="ringkas">
+    <b>Ringkasan:</b>
+    <ul>
+      <li>Kami mengumpulkan data secukupnya untuk menjalankan bot, memproses pembayaran, dan mencegah penyalahgunaan.</li>
+      <li>Kami tidak menjual data dan tidak memakai iklan atau pelacak pihak ketiga.</li>
+      <li>Kamu bisa meminta salinan, perbaikan, atau penghapusan data kapan saja.</li>
+    </ul>
+  </div>
+
+  <h2 id="data-dikumpulkan">1. Data yang kami kumpulkan</h2>
+  <p><b>1.1. Data akun:</b> nama, email, kata sandi (disimpan sebagai hash scrypt, bukan teks asli), dan—kalau kamu masuk dengan Google—ID akun Google, nama, serta email yang diberikan Google.</p>
+  <p><b>1.2. Data pembayaran:</b> nominal, nomor dan status tagihan QRIS, waktu pembayaran, serta riwayat Saldo dan transaksi. Kami tidak menerima nomor kartu, PIN, atau kata sandi e-wallet dan m-banking kamu. Pembayaran diproses oleh aplikasi pembayaranmu dan penyedia layanan QRIS.</p>
+  <p><b>1.3. Data server dan WhatsApp:</b></p>
+  <ul>
+    <li>nomor WhatsApp yang kamu tautkan;</li>
+    <li>data sesi WhatsApp (kunci dan kredensial perangkat tertaut) yang disimpan di server kami agar bot dapat tersambung;</li>
+    <li>daftar grup yang diikuti nomor tersebut (ID, nama, jumlah anggota, status terbuka atau tertutup), yang dibaca saat bot bekerja;</li>
+    <li>pengaturan bot, whitelist, postingan Auto JPM (teks dan gambar), dan link saluran yang kamu masukkan;</li>
+    <li>log terminal (status koneksi, nama grup tujuan, hasil pengiriman, dan cuplikan pesan yang dikirim bot), dibatasi beberapa ratus baris terakhir per server.</li>
+  </ul>
+  <p><b>1.4. Pesan yang masuk ke Nomor tertaut.</b> Sebagai perangkat tertaut, server bot menerima pesan yang masuk ke nomor tersebut, sama seperti WhatsApp Web. Pesan itu diproses secara otomatis hanya untuk:</p>
+  <ul>
+    <li>mengenali perintah dari kamu atau owner tambahan;</li>
+    <li>mengambil postingan yang kamu kirim atau teruskan untuk Auto JPM;</li>
+    <li>menghitung keramaian grup untuk fitur autoreply (hanya jumlah pesan, disimpan sementara di memori);</li>
+    <li>mencatat link undangan grup WhatsApp yang muncul di chat (fitur kumpulan link grup, dapat dihapus dengan perintah <span class="mono">resetdata</span>).</li>
+  </ul>
+  <p>Isi chat lainnya tidak kami simpan dan tidak kami baca secara manual.</p>
+  <p><b>1.5. Data teknis dan anti-penyalahgunaan:</b></p>
+  <ul>
+    <li>alamat IP;</li>
+    <li>jenis browser dan perangkat (user agent);</li>
+    <li>waktu masuk;</li>
+    <li>penanda perangkat acak yang dibuat oleh situs kami;</li>
+    <li>riwayat klaim trial (Akun, nomor WhatsApp dalam bentuk hash, jaringan, dan perangkat).</li>
+  </ul>
+  <p><b>1.6. Komunikasi:</b> isi pesan yang kamu kirim kepada kami lewat WhatsApp atau email saat meminta bantuan.</p>
+
+  <h2 id="cookie">2. Cookie dan penyimpanan lokal</h2>
+  <ul>
+    <li><span class="mono">vj_session</span>: cookie wajib (HttpOnly) yang menjaga kamu tetap masuk. Di server, kami hanya menyimpan versi hash dari token ini.</li>
+    <li>Penyimpanan lokal browser dipakai untuk preferensi tampilan dan penanda perangkat anti-penyalahgunaan.</li>
+    <li>Kami tidak memakai cookie iklan atau analitik pihak ketiga. Kalau kamu memakai <b>Masuk dengan Google</b>, Google dapat memasang cookie sendiri sesuai kebijakan Google. Font situs dimuat dari Google Fonts, sehingga Google dapat menerima alamat IP kamu saat halaman dibuka.</li>
+  </ul>
+
+  <h2 id="tujuan">3. Untuk apa data dipakai</h2>
+  <div class="dok-tabel-gulir">
+    <table class="dok-tabel">
+      <thead><tr><th scope="col">Tujuan</th><th scope="col">Data</th><th scope="col">Dasar pemrosesan (UU PDP Pasal 20)</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Membuat dan mengelola Akun</th><td>1.1</td><td>Pelaksanaan perjanjian</td></tr>
+        <tr><th scope="row">Menjalankan bot dan fitur JPM</th><td>1.3, 1.4</td><td>Pelaksanaan perjanjian</td></tr>
+        <tr><th scope="row">Memproses pembayaran dan Saldo</th><td>1.2</td><td>Pelaksanaan perjanjian; kewajiban hukum (pembukuan)</td></tr>
+        <tr><th scope="row">Keamanan, pembatasan percobaan, dan pencegahan penyalahgunaan trial</th><td>1.5</td><td>Kepentingan yang sah</td></tr>
+        <tr><th scope="row">Memberi bantuan</th><td>1.6 dan data terkait</td><td>Pelaksanaan perjanjian</td></tr>
+        <tr><th scope="row">Pemberitahuan layanan (masa aktif, perubahan ketentuan)</th><td>email, dashboard</td><td>Pelaksanaan perjanjian</td></tr>
+        <tr><th scope="row">Menanggapi permintaan pihak berwenang</th><td>sesuai permintaan</td><td>Kewajiban hukum</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Kami tidak memakai data kamu untuk iklan dan tidak menjualnya. Satu-satunya keputusan otomatis yang kami buat adalah penolakan trial berdasarkan sinyal anti-penyalahgunaan. Kamu dapat mengajukan keberatan atas keputusan itu lewat halaman Bantuan, dan kami akan meninjaunya secara manual.</p>
+
+  <h2 id="dibagikan">4. Dengan siapa data dibagikan</h2>
+  <ul>
+    <li><b>Penyedia pembayaran QRIS</b> dan bank atau e-wallet terkait, untuk memproses dan mencocokkan pembayaran.</li>
+    <li><b>Penyedia server/hosting</b> tempat Layanan berjalan (<mark class="isi">{{PENYEDIA_HOSTING}}</mark>, lokasi <mark class="isi">{{LOKASI_SERVER}}</mark>).</li>
+    <li><b>Google</b>, hanya jika kamu memakai Masuk dengan Google, serta Google Fonts saat halaman dimuat.</li>
+    <li><b>GitHub</b>, hanya jika penyimpanan gambar Auto JPM di GitHub diaktifkan oleh pengelola. Dalam hal itu, gambar postingan disimpan di repositori privat milik kami.</li>
+    <li><b>WhatsApp/Meta</b>: pesan yang dikirim bot melewati sistem WhatsApp dan tunduk pada kebijakan privasi WhatsApp.</li>
+    <li><b>Pihak berwenang</b>, bila diwajibkan oleh hukum.</li>
+  </ul>
+  <p>Kami tidak menjual atau menyewakan data pribadi kepada siapa pun.</p>
+
+  <h2 id="transfer">5. Transfer data ke luar negeri</h2>
+  <p>Beberapa penyedia di atas (misalnya Google, GitHub, dan mungkin penyedia hosting) memproses data di luar Indonesia. Kami hanya memakai penyedia yang memiliki standar pelindungan data yang memadai, sesuai ketentuan UU PDP.</p>
+
+  <h2 id="penyimpanan">6. Berapa lama data disimpan</h2>
+  <div class="dok-tabel-gulir">
+    <table class="dok-tabel">
+      <thead><tr><th scope="col">Data</th><th scope="col">Lama penyimpanan</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Akun (nama, email, hash kata sandi, ID Google)</th><td>Selama Akun aktif; dihapus paling lambat 30 hari setelah permintaan penghapusan dikonfirmasi</td></tr>
+        <tr><th scope="row">Sesi login browser (hash token, IP, user agent)</th><td>Sampai kamu keluar atau sesi kedaluwarsa (30 hari), lalu dibersihkan</td></tr>
+        <tr><th scope="row">Sesi WhatsApp</th><td>Selama Server aktif, ditambah masa tenggang 7 hari setelah kedaluwarsa (trial: 3 hari). Langsung dihapus saat kamu memutuskan nomor atau menghapus Server.</td></tr>
+        <tr><th scope="row">Data bot (pengaturan, whitelist, postingan Auto JPM, kumpulan link grup)</th><td>Sampai Server dihapus; otomatis dihapus 30 hari setelah kedaluwarsa</td></tr>
+        <tr><th scope="row">Log terminal</th><td>Hanya beberapa ratus baris terakhir per Server; baris lama terhapus otomatis</td></tr>
+        <tr><th scope="row">Transaksi, tagihan, dan mutasi Saldo</th><td>Hingga 10 tahun, untuk keperluan pembukuan dan kewajiban hukum</td></tr>
+        <tr><th scope="row">Catatan anti-penyalahgunaan (IP, penanda perangkat)</th><td>90 hari</td></tr>
+        <tr><th scope="row">Nomor WhatsApp yang pernah dipakai trial (dalam bentuk hash)</th><td>Selama Layanan beroperasi, untuk mencegah trial berulang</td></tr>
+        <tr><th scope="row">Pesan bantuan</th><td>1 tahun setelah percakapan selesai</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="keamanan">7. Keamanan</h2>
+  <p>Kami melindungi data dengan HTTPS, hash scrypt untuk kata sandi, hash untuk token sesi, akses admin yang terbatas, dan pemisahan data per Server. Tidak ada sistem yang 100% aman. Bila terjadi kegagalan pelindungan data yang berdampak padamu, kami akan memberi tahu kamu paling lambat 3 x 24 jam sesuai UU PDP.</p>
+
+  <h2 id="hak">8. Hak kamu</h2>
+  <p>Sesuai UU PDP, kamu berhak:</p>
+  <ul>
+    <li>mendapat informasi dan salinan data pribadi kamu;</li>
+    <li>memperbaiki data yang keliru;</li>
+    <li>meminta penghapusan data;</li>
+    <li>menarik persetujuan;</li>
+    <li>meminta pembatasan atau penundaan pemrosesan;</li>
+    <li>mengajukan keberatan atas keputusan otomatis (seperti penolakan trial);</li>
+    <li>mendapat data kamu dalam format yang umum dipakai.</li>
+  </ul>
+  <p>Kirim permintaan dari email Akun yang terdaftar ke __KONTAK_EMAIL__. Kami akan memverifikasi identitasmu dan menanggapi paling lambat 3 x 24 jam. Sebagian data, seperti catatan transaksi, tetap kami simpan bila diwajibkan hukum.</p>
+
+  <h2 id="anak">9. Anak-anak</h2>
+  <p>Layanan tidak ditujukan untuk anak di bawah 18 tahun tanpa izin orang tua atau wali.</p>
+
+  <h2 id="data-orang-lain">10. Data orang lain</h2>
+  <p>Nomor tertaut menerima pesan dan data grup yang melibatkan orang lain, misalnya anggota grup. Kami hanya memproses data tersebut untuk menjalankan fitur yang kamu minta, dan kamu bertanggung jawab memastikan pemakaian Layanan tidak melanggar hak mereka. Pihak ketiga yang merasa dirugikan dapat menghubungi __KONTAK_EMAIL__.</p>
+
+  <h2 id="perubahan">11. Perubahan kebijakan</h2>
+  <p>Kami dapat memperbarui kebijakan ini. Perubahan penting diumumkan di dashboard paling lambat 7 hari sebelum berlaku.</p>
+
+  <h2 id="kontak">12. Kontak</h2>
+  <p class="dok-kontak">Email: __KONTAK_EMAIL__ · WhatsApp: <a href="__KONTAK_WA_LINK__">__KONTAK_WA__</a> · Halaman <a href="/bantuan">Bantuan</a></p>
+</article>
+</div>
+</main>
+
+<footer class="kaki"><div class="wrap">
+  <div class="kaki-atas">
+    <div class="kaki-merek">
+      <a class="merek" href="/" aria-label="VaresaJasher, beranda"><span class="merek-tanda" aria-hidden="true">VJ</span><span class="merek-teks"><span class="merek-nama">Varesa<b>Jasher</b></span></span></a>
+      <p>Bot JPM &amp; jasher WhatsApp yang jalan 24 jam, diatur dari web.</p>
+    </div>
+    <div class="kaki-kol">
+      <h4>Produk</h4>
+      <ul>
+        <li><a href="/#mode">Mode JPM</a></li>
+        <li><a href="/harga">Harga</a></li>
+        <li><a href="/panduan">Panduan</a></li>
+        <li><a href="/status">Status layanan</a></li>
+      </ul>
+    </div>
+    <div class="kaki-kol">
+      <h4>Bantuan</h4>
+      <ul>
+        <li><a href="/faq">FAQ</a></li>
+        <li><a href="/bantuan">Bantuan &amp; kontak</a></li>
+        <li><a href="/panduan#tautkan-nomor">Cara menautkan nomor</a></li>
+        <li><a href="/bantuan#lapor">Laporkan penyalahgunaan</a></li>
+      </ul>
+    </div>
+    <div class="kaki-kol">
+      <h4>Legal</h4>
+      <ul>
+        <li><a href="/syarat">Syarat &amp; Ketentuan</a></li>
+        <li><a href="/privasi">Kebijakan Privasi</a></li>
+        <li><a href="/syarat#pengembalian-dana">Pengembalian dana</a></li>
+      </ul>
+    </div>
+    <div class="kaki-kol">
+      <h4>Akun</h4>
+      <ul>
+        <li><a href="/masuk">Masuk</a></li>
+        <li><a href="/daftar">Daftar gratis</a></li>
+        <li><a href="/dashboard">Dashboard</a></li>
+      </ul>
+    </div>
+  </div>
+  <p class="kaki-sangkalan">VaresaJasher adalah layanan independen dan tidak berafiliasi dengan, didukung, atau disponsori oleh WhatsApp LLC maupun Meta Platforms, Inc. WhatsApp adalah merek dagang milik pemiliknya.</p>
+  <div class="kaki-bawah">
+    <span>&copy; <span id="tahun">2026</span> VaresaJasher · saudara JadiVaresa (varesa.mom)</span>
+    <span>Dikelola oleh <a href="https://www.instagram.com/manzz_wakeup" target="_blank" rel="noopener">@ManzzyID</a></span>
+  </div>
+</div></footer>
+
+<script type="module" src="/assets/js/halaman-publik.js"></script>
+</body>
+</html>

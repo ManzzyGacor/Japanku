@@ -3,6 +3,7 @@ import { api, dataForm, sambilMemuat } from './lib.js';
 const form = document.getElementById('authForm');
 const mode = form.dataset.mode; // 'login' | 'register'
 const kotakError = document.getElementById('authError');
+const teksError = document.getElementById('authErrorText') || kotakError;
 const tombol = document.getElementById('submitBtn');
 const tos = document.getElementById('tos');
 
@@ -11,7 +12,7 @@ const tujuanMentah = new URLSearchParams(location.search).get('next') || '';
 const tujuan = /^\/(?!\/)/.test(tujuanMentah) ? tujuanMentah : '/dashboard';
 
 function tampilError(pesan) {
-  kotakError.textContent = pesan;
+  teksError.textContent = pesan;
   kotakError.hidden = false;
 }
 function sembunyikanError() {
@@ -29,7 +30,8 @@ document.querySelectorAll('[data-toggle]').forEach((btn) => {
     const input = document.getElementById(btn.dataset.toggle);
     const lihat = input.type === 'password';
     input.type = lihat ? 'text' : 'password';
-    btn.textContent = lihat ? 'Sembunyikan' : 'Lihat';
+    btn.textContent = lihat ? 'Tutup' : 'Lihat';
+    btn.setAttribute('aria-label', lihat ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi');
   });
 });
 

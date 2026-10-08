@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { db, semuaPengaturan } from '../db.js';
 import { hashPassword, verifyPassword, publicUser, wajibLogin, pembatas } from '../auth.js';
+import { qrisAktif, modeSimulasi } from '../payment.js';
+import { biayaAdmin, minimalQris, topupManualAktif, bentukInvoice, tutupInvoice, INVOICE_TTL_MS } from '../pembayaran.js';
 import { gagal, teks, bulat } from '../util.js';
 
 const router = Router();
@@ -11,9 +13,14 @@ const router = Router();
 
 router.get('/packages', (_req, res) => {
   const paket = db
-    .prepare('SELECT id, name, description, days, price FROM packages WHERE active = 1 ORDER BY sort, price')
+    .prepare('SELECT id, code, name, size_label AS sizeLabel, description, days, price FROM packages WHERE active = 1 ORDER BY sort, price')
     .all();
   res.json({ success: true, packages: paket });
+});
+
+router.get('/publik/ringkasan', (_req, res) => {
+  const serverAktif = db.prepare('SELECT COUNT(*) AS n FROM servers WHERE phone IS NOT NULL AND expires_at > ?').get(Date.now()).n;
+  res.json({ success: true, serverAktif });
 });
 
 router.get('/site', (_req, res) => {
@@ -26,6 +33,14 @@ router.get('/site', (_req, res) => {
       paymentInstructions: s.payment_instructions,
       paymentQrisUrl: s.payment_qris_url,
       minTopup: Number(s.min_topup) || 0,
+      qris: {
+        enabled: qrisAktif(),
+        simulasi: modeSimulasi(),
+        fee: biayaAdmin(),
+        minAmount: minimalQris(),
+        ttlMinutes: Math.round(INVOICE_TTL_MS / 60000),
+      },
+      manualTopup: topupManualAktif(),
     },
   });
 });
@@ -62,19 +77,33 @@ router.put('/account/password', wajibLogin, batasSandi, async (req, res) => {
 // Saldo & top up
 // ---------------------------------------------------------------------------
 
-router.get('/wallet', wajibLogin, (req, res) => {
+router.get('/wallet', wajibLogin, async (req, res) => {
   const transaksi = db
     .prepare('SELECT id, type, amount, balance_after, description, created_at FROM transactions WHERE user_id = ? ORDER BY id DESC LIMIT 50')
     .all(req.user.id);
   const topup = db
     .prepare('SELECT id, amount, method, note, status, admin_note, created_at, processed_at FROM topups WHERE user_id = ? ORDER BY id DESC LIMIT 30')
     .all(req.user.id);
-  res.json({ success: true, balance: req.user.balance, transactions: transaksi, topups: topup });
+
+  // Tagihan QRIS (tanpa menunggu gateway). Yang masih pending tapi sudah lewat
+  // waktu ditutup di latar; UI menganggap expiresAt <= now = "sedang ditutup".
+  const barisInvoice = db
+    .prepare('SELECT * FROM invoices WHERE user_id = ? ORDER BY id DESC LIMIT 30')
+    .all(req.user.id);
+  const invoices = await Promise.all(barisInvoice.map((inv) => bentukInvoice(inv)));
+  const pendingRow = barisInvoice.find((inv) => inv.status === 'pending');
+  if (pendingRow && pendingRow.expires_at <= Date.now()) {
+    tutupInvoice(pendingRow, 'expired').catch((e) => console.error('[wallet] tutup', e.message));
+  }
+  const pendingInvoice = pendingRow ? await bentukInvoice(pendingRow, { denganQr: true }) : null;
+
+  res.json({ success: true, balance: req.user.balance, transactions: transaksi, topups: topup, invoices, pendingInvoice });
 });
 
 const batasTopup = pembatas({ batas: 10, jendelaMs: 60 * 60 * 1000, kunci: (req) => `topup|${req.user?.id}` });
 
 router.post('/topups', wajibLogin, batasTopup, (req, res) => {
+  if (!topupManualAktif()) gagal(403, 'Top up manual dinonaktifkan admin. Pakai QRIS otomatis.');
   const minimal = Number(semuaPengaturan().min_topup) || 1000;
   const amount = bulat(req.body?.amount, { nama: 'Nominal', min: minimal, max: 10_000_000 });
   const method = teks(req.body?.method, { nama: 'Metode pembayaran', max: 40 });

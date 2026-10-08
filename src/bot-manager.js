@@ -1,9 +1,11 @@
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 import { fork } from 'child_process';
 import QRCode from 'qrcode';
 import { db } from './db.js';
 import { env, ROOT } from './env.js';
+import { sumberDayaServer } from './tiers.js';
 
 /*
  Manajer bot: satu server = satu proses anak (bot/worker.js) = satu nomor WhatsApp.
@@ -65,6 +67,12 @@ class BotManager {
   constructor() {
     /** @type {Map<number, object>} */
     this.bot = new Map();
+    /**
+     * Hook pairing: diisi server.js untuk mencatat nomor ke ledger & mengaktifkan
+     * trial. Dipanggil (serverId, phone, identity) setelah bind berhasil; kalau
+     * mengembalikan { ok:false, alasan }, bind dibatalkan (nomor bekas untuk trial).
+     */
+    this.onPairing = null;
   }
 
   /** Data runtime satu server (dibuat kalau belum ada) */
@@ -198,13 +206,26 @@ class BotManager {
 
     this.catat(server.id, login ? `Menyalakan bot untuk login (${login.metode}) ...` : 'Menyalakan bot ...', 'yellow');
 
+    // Batas sumber daya per tier (memori heap + prioritas CPU).
+    const batas = sumberDayaServer(server);
     const child = fork(WORKER, [], {
       cwd: dir,
       env: lingkungan,
-      execArgv: [`--max-old-space-size=${env.botMaxMemoryMb}`],
+      execArgv: [`--max-old-space-size=${batas.maxMemoryMb}`],
       stdio: ['ignore', 'ignore', 'pipe', 'ipc'],
     });
     rt.child = child;
+
+    // Prioritas CPU: tier murah dapat nice lebih tinggi (prioritas lebih
+    // rendah) supaya bot paket mahal lebih didahulukan saat CPU rebutan.
+    // Menurunkan prioritas tidak butuh root; kegagalan diabaikan.
+    if (batas.nice > 0) {
+      try {
+        os.setPriority(child.pid, batas.nice);
+      } catch {
+        /* sebagian lingkungan menolak setPriority; abaikan */
+      }
+    }
 
     child.stderr?.on('data', (data) => this.catat(server.id, data.toString(), 'red'));
     child.on('message', (pesan) => this.terimaPesan(server.id, pesan));
@@ -373,6 +394,25 @@ class BotManager {
       this.catat(serverId, `Gagal mengikat nomor: ${error.message}`, 'red');
       rt.message = `Nomor ${phone} sudah dipakai di server lain.`;
       rt.stopRequested = true;
+      rt.child?.send({ t: 'logout' });
+      return;
+    }
+
+    // Hook pairing: catat nomor ke ledger & aktifkan trial. Untuk server trial
+    // yang nomornya ternyata sudah pernah dipakai (lolos pre-check di mode QR),
+    // bind dibatalkan dan bot logout.
+    let hasilHook = { ok: true };
+    try {
+      hasilHook = this.onPairing?.(serverId, phone, '') ?? { ok: true };
+    } catch (error) {
+      this.catat(serverId, `Hook pairing gagal: ${error.message}`, 'red');
+    }
+    if (hasilHook && hasilHook.ok === false) {
+      db.prepare('UPDATE servers SET phone = NULL, enabled = 0 WHERE id = ?').run(serverId);
+      this.catat(serverId, hasilHook.alasan, 'red');
+      rt.message = hasilHook.alasan;
+      rt.stopRequested = true;
+      rt.status = 'stopping';
       rt.child?.send({ t: 'logout' });
       return;
     }

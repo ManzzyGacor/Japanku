@@ -6,7 +6,6 @@ const perintah = [
   'jpmtag',
   'autojpm',
   'autoreply',
-  'pushkontak',
   'whitelist',
   'addwhitelist',
   'delwhitelist',

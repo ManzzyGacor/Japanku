@@ -1,75 +1,101 @@
 import { api, html, raw, rupiah, tanggal, sisaWaktu, jam, toast, sambilMemuat, salin, dataForm } from '../lib.js';
 import { ikon, badgeStatus, sedangJalan, konfirmasi, formDialog } from '../ui.js';
+import { kirimTagihan } from './invoice.js';
 
-const JEDA_PANTAU = 2000;
+/** Nominal minimum gateway QRIS (dari /api/site). */
+const minQris = (app) => Math.max(app.site?.qris?.minAmount || 1000, 1000);
 
-/** Daftar perintah bot (sama dengan plugins/ di folder bot) */
+const JEDA_PANTAU = 2000; // detail server
+const JEDA_DAFTAR = 5000; // daftar server
+const BERLAKU_KODE = 60; // detik — kode pairing WhatsApp kira-kira 60 dtk lalu berganti
+
+// Perintah bot yang benar-benar ada (lihat plugins/ di folder bot). Tanpa push kontak.
 const PERINTAH = [
-  ['menu', 'Daftar perintah'],
-  ['ping', 'Cek bot aktif'],
-  ['listgc', 'Daftar grup beserta ID & nomor urutnya'],
-  ['jpm <pesan>', 'Kirim ke semua grup (boleh sambil kirim gambar)'],
-  ['jpmtag <pesan>', 'Seperti jpm, semua anggota ikut ditag'],
-  ['autojpm', 'Simpan pesan sebelumnya lalu kirim berulang terus'],
-  ['autojpm list / stop', 'Lihat daftar postingan / hentikan AutoJPM'],
-  ['autoreply <pesan>', 'Balas otomatis ke grup yang sedang ramai'],
-  ['pushkontak <ID_Grup> <pesan>', 'Japri ke semua anggota satu grup'],
-  ['whitelist', 'Grup yang dilewati jpm & autojpm'],
-  ['addwhitelist 1,2,3', 'Tambah whitelist (nomor dari listgc)'],
-  ['delwhitelist 1 / all', 'Hapus dari whitelist'],
-  ['resetdata', 'Kosongkan data bot (sesi tetap aman)'],
+  ['.menu', 'Tampilkan daftar perintah bot.'],
+  ['.ping', 'Cek bot masih hidup.'],
+  ['.listgc', 'Daftar grup beserta nomor urut untuk whitelist.'],
+  ['.jpm', 'Kirim pesan sekali ke semua grup (bisa sambil kirim gambar).'],
+  ['.jpmtag', 'Seperti .jpm, tapi semua anggota ikut ter-tag diam-diam.'],
+  ['.autojpm', 'Simpan pesan lalu kirim ulang otomatis tiap jeda.'],
+  ['.autoreply', 'Balas otomatis grup yang sedang ramai.'],
+  ['.whitelist', 'Lihat grup yang dilewati .jpm & .autojpm.'],
+  ['.addwhitelist', 'Tambah grup ke whitelist (pakai nomor dari .listgc).'],
+  ['.delwhitelist', 'Hapus grup dari whitelist (atau all).'],
+  ['.resetdata', 'Kosongkan data bot. Sesi WhatsApp tetap aman.'],
 ];
 
+const hargaAngka = (n) => rupiah(n).replace(/^Rp/, '');
 const opsiPaket = (packages) =>
   packages.map((p) => html`<option value="${p.id}">${p.name} — ${p.days} hari — ${rupiah(p.price)}</option>`);
 
+/** Lencana server, tapi tidak melebar di dalam kolom (dibungkus div). */
+const lencana = (s) => html`<div>${badgeStatus(s)}</div>`;
+
 // ===========================================================================
-// Daftar server
+// 5.8 — Daftar server ("Server saya")
 // ===========================================================================
 
-export async function daftarServer({ view, app }) {
+export async function daftarServer({ view, app, masihAktif }) {
   app.setJudul('Server saya');
 
+  const kartuServer = (s, i) => {
+    const hariSisa = Math.floor((s.expiresAt - Date.now()) / 86400000);
+    const segera = !s.expired && hariSisa <= 3;
+    return html`
+      <div class="kartu kartu-server">
+        <a class="regang-tautan" href="/dashboard/server/${s.id}" aria-label="Buka ${s.name}"></a>
+        <header class="slug">
+          <span class="slug-judul">Server ${raw(String(i + 1).padStart(2, '0'))}</span>
+          <span class="slug-meta">${s.package?.name ?? 'Tanpa paket'}</span>
+        </header>
+        <div class="kartu-isi">
+          <div class="kartu-server-nama">${s.name}</div>
+          ${s.phone
+            ? html`<div class="kartu-server-telepon mono">${s.phone}</div>`
+            : html`<div class="kartu-server-telepon kosong">Belum ada nomor</div>`}
+          ${lencana(s)}
+          <div class="kartu-server-jpm kosong">Belum ada JPM berjalan.</div>
+          <div class="kartu-server-kaki">
+            <span class="${raw(segera ? 'segera' : '')}">${
+              s.expired ? 'Masa aktif habis' : html`Aktif s/d ${tanggal(s.expiresAt)} · ${sisaWaktu(s.expiresAt)}`
+            }</span>
+            ${segera || s.expired
+              ? html`<a class="btn btn-sekunder btn-s di-atas" href="/dashboard/server/${s.id}">Perpanjang</a>`
+              : ''}
+            <span class="panah" aria-hidden="true">${ikon.panah}</span>
+          </div>
+        </div>
+      </div>`;
+  };
+
   const gambar = (servers) => {
-    const pengumuman = app.site.announcement
-      ? html`<div class="alert alert-warn announce">${app.site.announcement}</div>`
+    if (!masihAktif()) return;
+    app.setJumlahServer(servers.length);
+
+    const pengumuman = app.site?.announcement
+      ? html`<div class="catatan-peringatan" role="status" style="margin-bottom:24px">${ikon.info}<span>${app.site.announcement}</span></div>`
       : '';
 
     const isi = servers.length
-      ? html`<div class="server-grid">${servers.map(
-          (s) => html`
-            <a class="card server-card" href="#/servers/${s.id}">
-              <div class="server-card-head">
-                <div>
-                  <h3>${s.name}</h3>
-                  ${s.phone ? html`<div class="phone">${s.phone}</div>` : html`<div class="phone none">Belum ada nomor</div>`}
-                </div>
-                ${badgeStatus(s)}
-              </div>
-              <dl class="kv">
-                <div><dt>Paket</dt><dd>${s.package?.name ?? '-'}</dd></div>
-                <div><dt>Aktif sampai</dt><dd>${tanggal(s.expiresAt)}</dd></div>
-                <div><dt>Sisa</dt><dd>${sisaWaktu(s.expiresAt)}</dd></div>
-              </dl>
-              <span class="open-hint">Kelola server &rarr;</span>
-            </a>`,
-        )}</div>`
-      : html`
-          <div class="card empty">
-            <div class="empty-icon">${ikon.server}</div>
-            <h3>Belum punya server</h3>
-            <p>Beli server pertama kamu, lalu hubungkan nomor WhatsApp untuk mulai JPM.</p>
-            <a class="btn btn-primary" href="#/buy">Beli server</a>
-          </div>`;
+      ? html`<div class="server-grid">
+          ${servers.map(kartuServer)}
+          <a class="kartu-tambah" href="/dashboard/beli">${ikon.tambah}<span>Tambah server</span></a>
+        </div>`
+      : html`<div class="kosong">
+          <h3>Belum ada server</h3>
+          <p>Coba dulu gratis 24 jam, atau beli server lalu tautkan nomor WhatsApp untuk mulai siaran JPM.</p>
+          <a class="btn btn-utama" href="/dashboard/beli">${ikon.tambah} Coba gratis / beli server</a>
+        </div>`;
 
     view.innerHTML = html`
       ${pengumuman}
-      <div class="page-head">
+      <div class="kepala-halaman">
         <div>
-          <h2>Server saya</h2>
-          <p>1 server untuk 1 nomor WhatsApp. Butuh nomor lain? Beli server lagi.</p>
+          <p class="kicker">Meja siaran</p>
+          <h1>Server saya</h1>
+          <p class="sub">1 server untuk 1 nomor WhatsApp. Butuh nomor lain? Beli server lagi.</p>
         </div>
-        <div class="page-actions"><a class="btn btn-primary" href="#/buy">${ikon.tambah} Beli server</a></div>
+        <div class="aksi"><a class="btn btn-utama" href="/dashboard/beli">${ikon.tambah} Beli server</a></div>
       </div>
       ${isi}`.s;
   };
@@ -77,102 +103,179 @@ export async function daftarServer({ view, app }) {
   gambar((await api('/servers')).servers);
 
   const timer = setInterval(async () => {
-    if (document.hidden) return;
+    if (document.hidden || !masihAktif()) return;
     try {
       gambar((await api('/servers')).servers);
     } catch {
-      // coba lagi di putaran berikutnya
+      /* coba lagi putaran berikutnya */
     }
-  }, 5000);
+  }, JEDA_DAFTAR);
   return () => clearInterval(timer);
 }
 
 // ===========================================================================
-// Beli server
+// Beli server (pemilih paket tiket, §5.21)
 // ===========================================================================
+
+/** Ambil status trial (aman kalau endpoint gagal). */
+async function statusTrial() {
+  try {
+    return await api('/trial/status');
+  } catch {
+    return { enabled: false, eligible: { boleh: false } };
+  }
+}
+
+/** Klaim free trial lalu buka server barunya. Dipakai tombol "Coba gratis". */
+async function klaimTrial(app, tombol) {
+  try {
+    const { server } = await sambilMemuat(tombol, () => api('/trial/claim', { method: 'POST' }));
+    await app.muatUlangUser().catch(() => {});
+    toast('Server Uji Sinyal dibuat. Tautkan nomor untuk mulai.', 'ok', { kicker: 'Free trial' });
+    app.pergi(`/dashboard/server/${server.id}`);
+  } catch (error) {
+    toast(error.message, 'error');
+  }
+}
+
+/** Banner ajakan trial (hanya ditampilkan kalau layak). */
+function bannerTrial(trial) {
+  if (!trial?.enabled || !trial?.eligible?.boleh) return '';
+  return html`<div class="kartu kartu-trial" style="margin-bottom:18px">
+    <div class="kartu-isi" style="display:flex;flex-wrap:wrap;align-items:center;gap:14px;justify-content:space-between">
+      <div>
+        <p class="kicker" style="color:var(--hijau)">Gratis · Uji Sinyal</p>
+        <b style="font-size:18px">Coba dulu gratis 24 jam</b>
+        <p class="bantu" style="margin-top:4px">1 server, semua mode JPM, tanpa bayar. Berlaku sekali per akun & per nomor WhatsApp.</p>
+      </div>
+      <button class="btn btn-utama" type="button" id="btnTrial">${ikon.tambah} Coba gratis 24 jam</button>
+    </div>
+  </div>`;
+}
 
 export async function beliServer({ view, app }) {
   app.setJudul('Beli server');
-  const [{ packages }] = await Promise.all([api('/packages'), app.muatUlangUser()]);
+  const [{ packages }, trial] = await Promise.all([api('/packages'), statusTrial(), app.muatUlangUser()]);
 
   if (!packages.length) {
-    view.innerHTML = html`<div class="card empty"><h3>Belum ada paket</h3><p>Admin belum membuka penjualan. Coba lagi nanti.</p></div>`.s;
+    view.innerHTML = html`
+      <div class="kepala-halaman"><div><p class="kicker">Tiket siaran</p><h1>Beli server</h1></div></div>
+      <div class="kosong"><h3>Belum ada paket</h3><p>Admin belum membuka penjualan. Coba lagi nanti.</p></div>`.s;
     return undefined;
   }
 
   view.innerHTML = html`
-    <div class="page-head">
+    <div class="kepala-halaman">
       <div>
-        <h2>Beli server</h2>
-        <p>Pilih paket. Server langsung aktif dan siap dihubungkan ke nomor WhatsApp.</p>
+        <p class="kicker">Tiket siaran</p>
+        <h1>Beli server</h1>
+        <p class="sub">Pilih paket. Server langsung aktif dan siap ditautkan ke nomor WhatsApp.</p>
       </div>
     </div>
-    <form class="card" id="buyForm">
-      <div class="label" style="margin-bottom:12px">Paket</div>
-      <div class="pkg-grid">
-        ${packages.map(
-          (p, i) => html`
-            <label class="pkg">
-              <input type="radio" name="packageId" value="${p.id}" ${i === 0 ? raw('checked') : ''}>
-              <div class="pkg-body">
-                <div class="pkg-name">${p.name}</div>
-                <div class="pkg-price">${rupiah(p.price)} <small>/ ${p.days} hari</small></div>
-                ${p.description ? html`<div class="pkg-desc">${p.description}</div>` : ''}
-              </div>
-            </label>`,
-        )}
-      </div>
+    ${bannerTrial(trial)}
+    <form class="kartu" id="formBeli">
+      <header class="slug"><span class="slug-judul">Pilih paket</span><span class="slug-meta">1 server = 1 nomor</span></header>
+      <div class="kartu-isi">
+        <fieldset style="border:0">
+          <legend class="label">Paket</legend>
+          <div class="paket-grid">
+            ${packages.map(
+              (p, i) => html`
+                <label class="paket">
+                  <input type="radio" name="packageId" value="${p.id}" ${i === 0 ? raw('checked') : ''}>
+                  <span>
+                    <span class="paket-kelas"><span>${p.name}</span><span>${p.sizeLabel ?? ''}</span></span>
+                    <span class="paket-harga"><span class="rp">Rp</span>${hargaAngka(p.price)}</span>
+                    <span class="paket-durasi">berlaku ${p.days} hari · 1 nomor</span>
+                  </span>
+                </label>`,
+            )}
+          </div>
+        </fieldset>
 
-      <div class="field" style="margin-top:20px; max-width:420px">
-        <label for="serverName">Nama server <span class="faint">(opsional)</span></label>
-        <input class="input" id="serverName" name="name" maxlength="40" placeholder="Misalnya: Jualan Akun">
-      </div>
+        <div class="field" style="margin-top:20px;max-width:420px">
+          <label class="label" for="serverName">Nama server <span class="opsi">opsional · hanya untuk kamu</span></label>
+          <input class="isian" id="serverName" name="name" maxlength="40" placeholder="Misalnya: Jualan Akun">
+        </div>
 
-      <div class="summary" id="buySummary"></div>
-      <div class="page-actions" id="buyActions"></div>
+        <dl class="ringkasan" id="beliRingkas"></dl>
+        <div class="aksi-jpm" id="beliAksi"></div>
+      </div>
     </form>`.s;
 
-  const form = view.querySelector('#buyForm');
+  view.querySelector('#btnTrial')?.addEventListener('click', (e) => klaimTrial(app, e.currentTarget));
+
+  const form = view.querySelector('#formBeli');
 
   const ringkas = () => {
-    const paket = packages.find((p) => String(p.id) === form.elements.packageId.value);
+    const paket = packages.find((p) => String(p.id) === form.elements.packageId.value) ?? packages[0];
     const sisa = app.user.balance - paket.price;
-    view.querySelector('#buySummary').innerHTML = html`
-      <div><span class="muted">Harga ${paket.name} (${paket.days} hari)</span><span>${rupiah(paket.price)}</span></div>
-      <div><span class="muted">Saldo kamu</span><span>${rupiah(app.user.balance)}</span></div>
-      <div class="total"><span>Sisa saldo</span><span class="${sisa < 0 ? 'kurang' : ''}">${rupiah(sisa)}</span></div>`.s;
-    view.querySelector('#buyActions').innerHTML = (
-      sisa < 0
-        ? html`<span class="muted small" style="align-self:center">Saldo belum cukup.</span><a class="btn btn-primary" href="#/wallet">Isi saldo</a>`
-        : html`<button class="btn btn-primary btn-lg" type="submit" id="buyBtn">Beli server</button>`
+    const kurang = sisa < 0;
+    form.querySelector('#beliRingkas').innerHTML = html`
+      <div><dt>Harga ${paket.name} (${paket.days} hari)</dt><dd>${rupiah(paket.price)}</dd></div>
+      <div><dt>Saldo kamu</dt><dd>${rupiah(app.user.balance)}</dd></div>
+      <div class="total ${raw(kurang ? 'kurang' : '')}"><dt>Sisa saldo</dt><dd>${rupiah(sisa)}</dd></div>`.s;
+    const qrisAktif = !!app.site?.qris?.enabled;
+    const bayarQris = Math.max(paket.price - app.user.balance, minQris(app));
+    form.querySelector('#beliAksi').innerHTML = (
+      kurang
+        ? html`<div class="catatan-peringatan" role="alert" style="flex:1 1 100%">${ikon.peringatan}<span>Saldo kurang ${rupiah(-sisa)}. Isi saldo dulu${qrisAktif ? ', atau bayar paket ini lewat QRIS' : ' untuk membeli paket ini'}.</span></div>
+               <a class="btn btn-sekunder" href="/dashboard/saldo">${ikon.dompet} Isi saldo</a>
+               ${qrisAktif ? html`<button class="btn btn-utama" type="button" id="btnQrisBeli">Bayar ${rupiah(bayarQris)} lewat QRIS ${ikon.panah}</button>` : ''}`
+        : html`<button class="btn btn-utama btn-l" type="submit" id="btnBeli">Bayar ${rupiah(paket.price)} dari saldo ${ikon.panah}</button>`
     ).s;
   };
-  // Hanya pilihan paket yang mengubah ringkasan. Jangan gambar ulang saat kolom nama
-  // berubah: event "change" muncul ketika tombol Beli diklik, dan tombolnya akan
-  // terganti di tengah klik.
+  // Hanya pilihan paket yang mengubah ringkasan; jangan gambar ulang saat kolom nama
+  // berubah (event "change" juga muncul saat tombol Beli diklik -> tombol terganti).
   form.addEventListener('change', (e) => {
     if (e.target.name === 'packageId') ringkas();
   });
   ringkas();
 
+  // Bayar lewat QRIS saat saldo kurang (tombol muncul di branch "kurang").
+  form.addEventListener('click', async (e) => {
+    const btn = e.target.closest('#btnQrisBeli');
+    if (!btn) return;
+    const data = dataForm(form);
+    const paket = packages.find((p) => String(p.id) === data.packageId);
+    if (!paket) return;
+    try {
+      const { invoice } = await sambilMemuat(btn, () =>
+        kirimTagihan('/payment/buy', { body: { packageId: Number(data.packageId), name: data.name } }),
+      );
+      app.pergi(`/dashboard/invoice/${invoice.orderId}`);
+    } catch (error) {
+      if (error.code === 'SALDO_CUKUP') {
+        toast('Saldo kamu ternyata cukup, beli langsung pakai saldo.', 'info');
+        await app.muatUlangUser().catch(() => {});
+        ringkas();
+      } else if (error.code === 'PENDING_EXISTS' && error.orderId) {
+        app.pergi(`/dashboard/invoice/${error.orderId}`);
+      } else {
+        toast(error.message, 'error');
+      }
+    }
+  });
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = dataForm(form);
     const paket = packages.find((p) => String(p.id) === data.packageId);
+    if (!paket || app.user.balance < paket.price) return;
     const setuju = await konfirmasi({
       judul: 'Beli server?',
-      pesan: `Paket ${paket.name} (${paket.days} hari) seharga ${rupiah(paket.price)} akan dipotong dari saldo.`,
+      slug: 'Beli server',
+      pesan: `Paket ${paket.name} (${paket.days} hari) seharga ${rupiah(paket.price)} dipotong dari saldo.`,
       ok: 'Beli sekarang',
     });
     if (!setuju) return;
-
     try {
-      const { server } = await sambilMemuat(view.querySelector('#buyBtn'), () =>
+      const { server } = await sambilMemuat(form.querySelector('#btnBeli'), () =>
         api('/servers', { method: 'POST', body: { packageId: Number(data.packageId), name: data.name } }),
       );
       await app.muatUlangUser();
-      toast('Server berhasil dibeli. Sekarang hubungkan nomor kamu.');
-      location.hash = `#/servers/${server.id}`;
+      toast('Server dibeli. Sekarang tautkan nomor kamu.', 'ok', { kicker: 'Server baru' });
+      app.pergi(`/dashboard/server/${server.id}`);
     } catch (error) {
       toast(error.message, 'error');
     }
@@ -181,313 +284,391 @@ export async function beliServer({ view, app }) {
 }
 
 // ===========================================================================
-// Detail server
+// 5.9/5.7 — Detail server
 // ===========================================================================
 
-export async function detailServer({ view, params, app }) {
+export async function detailServer({ view, params, app, masihAktif }) {
   const id = Number(params[0]);
   let [{ server }, { packages }] = await Promise.all([api(`/servers/${id}`), api('/packages')]);
   app.setJudul(server.name);
 
-  let metode = 'pairing';
+  // Pairing: metode awal (telepon tidak bisa scan layarnya sendiri -> KODE di telepon,
+  // SCAN QR di desktop). Dipakai hanya di tahap "form sambung".
+  let metode = window.matchMedia('(min-width: 761px)').matches ? 'qr' : 'pairing';
   let kunciKoneksi = '';
-  let kunciMasa = '';
+  let kunciKepala = '';
   let logTerakhir = 0;
   let berhenti = false;
+  let kodeTeks = '';
+  let kodeMulai = 0;
+  const semuaLog = []; // untuk tombol "Unduh"
+  let tahanGulir = false;
 
-  view.innerHTML = html`<div id="serverPage">
-    <a class="back-link" href="#/servers">${ikon.kembali} Semua server</a>
-    <div class="page-head">
+  view.innerHTML = html`<div id="halamanServer">
+    <a class="kembali-tautan" href="/dashboard">${ikon.kembali} Semua server</a>
+
+    <header class="server-kepala">
       <div>
-        <div class="server-head"><h2 id="sName"></h2><span id="sBadge"></span></div>
-        <p class="muted" id="sSub"></p>
+        <p class="kicker" id="sKicker"></p>
+        <h1 class="server-nama" id="sNama"></h1>
+        <p class="server-meta" id="sMeta"></p>
       </div>
-      <div class="page-actions"><button class="rename-btn" id="renameBtn" type="button">Ganti nama</button></div>
+      <div class="server-status">
+        <span id="sLencana"></span>
+        <div class="aksi">
+          <button class="btn btn-sekunder btn-s" id="btnPerpanjang" type="button">${ikon.segar} Perpanjang</button>
+          <button class="btn btn-sekunder btn-s" id="btnGantiNama" type="button">Ganti nama</button>
+        </div>
+      </div>
+    </header>
+
+    <div id="sPesan"></div>
+
+    <div style="margin-top:24px">
+      <article class="kartu" id="kartuKoneksi"></article>
+
+      <article class="kartu">
+        <header class="slug"><span class="slug-judul">Pengaturan bot</span><span class="slug-meta">Pengganti config.js</span></header>
+        <div class="kartu-isi" id="isiPengaturan"></div>
+      </article>
+
+      <article class="kartu">
+        <header class="slug"><span class="slug-judul">Cetakan langsung</span><span class="slug-live"><i></i>Langsung</span></header>
+        <div class="cetak" id="cetak"><ol class="log" role="log" aria-live="off" id="log"></ol></div>
+        <footer class="log-kaki">
+          <span>400 baris terakhir · tersimpan sementara di server</span>
+          <span class="aksi">
+            <button class="btn btn-sekunder btn-s" id="btnTahan" type="button" aria-pressed="false">${ikon.jeda} Tahan gulir</button>
+            <button class="btn btn-sekunder btn-s" id="btnUnduh" type="button">${ikon.unduh} Unduh</button>
+          </span>
+        </footer>
+      </article>
+
+      <article class="kartu">
+        <header class="slug"><span class="slug-judul">Perintah bot</span><span class="slug-meta">lewat chat</span></header>
+        <div class="kartu-isi">
+          <p class="catatan-mini">Kirim dari chat WhatsApp nomor bot (misalnya chat ke diri sendiri) atau dari nomor owner tambahan. Awali dengan prefix, misalnya <span class="perintah">.menu</span>.</p>
+          <ul class="cmd-ref" style="margin-top:14px">
+            ${PERINTAH.map(([cmd, ket]) => html`<li><span class="perintah">${cmd}</span><span class="ket">${ket}</span></li>`)}
+          </ul>
+        </div>
+      </article>
+
+      <article class="kartu">
+        <header class="slug"><span class="slug-judul">Hapus server</span><span class="slug-meta">zona bahaya</span></header>
+        <div class="kartu-isi">
+          <div class="catatan-bahaya" style="margin-bottom:16px">${ikon.peringatan}<span>Bot dimatikan, nomor dilepas, dan semua data server (whitelist, postingan Auto JPM) dihapus. Sisa masa aktif tidak dikembalikan.</span></div>
+          <button class="btn btn-bahaya" id="btnHapus" type="button">Hapus server ini</button>
+        </div>
+      </article>
     </div>
-    <div id="sMessage"></div>
-
-    <div class="grid-2">
-      <div class="stack">
-        <section class="card" id="connCard"></section>
-        <section class="card" id="expCard"></section>
-      </div>
-      <div class="stack">
-        <section class="card">
-          <div class="card-title"><h3>Terminal</h3><span class="badge no-dot">langsung</span></div>
-          <div class="terminal" id="terminal" role="log" aria-live="off"><div class="ln kosong">Belum ada log. Log muncul saat bot dinyalakan.</div></div>
-        </section>
-        <section class="card">
-          <div class="card-title"><h3>Perintah bot</h3></div>
-          <p class="card-sub">Kirim dari chat WhatsApp nomor bot (misalnya ke chat diri sendiri), atau dari nomor owner tambahan. Awali dengan prefix, contoh <code>.menu</code>.</p>
-          <table class="cmd-table">
-            ${PERINTAH.map(([cmd, ket]) => html`<tr><td><code>${cmd}</code></td><td>${ket}</td></tr>`)}
-          </table>
-        </section>
-      </div>
-    </div>
-
-    <section class="card" id="settingsCard" style="margin-top:18px"></section>
-
-    <section class="card danger-zone" style="margin-top:18px">
-      <div class="card-title"><h3>Hapus server</h3></div>
-      <p class="card-sub">Bot dimatikan, nomor dilepas, dan semua data server (whitelist, postingan AutoJPM) dihapus. Sisa masa aktif tidak dikembalikan.</p>
-      <button class="btn btn-danger" id="deleteBtn" type="button">Hapus server ini</button>
-    </section>
   </div>`.s;
 
-  // Pendengar kejadian dipasang di pembungkus halaman ini (bukan #view yang dipakai
-  // bersama semua halaman), supaya ikut hilang saat pindah halaman.
-  const halaman = view.querySelector('#serverPage');
+  const halaman = view.querySelector('#halamanServer');
   const $ = (sel) => halaman.querySelector(sel);
-  const terminal = $('#terminal');
+  const cetak = $('#cetak');
+  const logEl = $('#log');
 
   // -------------------------------------------------------------------------
-  // Kepala halaman
+  // Kepala
   // -------------------------------------------------------------------------
-
   function gambarKepala() {
-    $('#sName').textContent = server.name;
-    $('#sBadge').innerHTML = badgeStatus(server).s;
-    $('#sSub').textContent = server.phone
-      ? `Nomor ${server.phone} · ${server.package?.name ?? 'Tanpa paket'} · aktif sampai ${tanggal(server.expiresAt)}`
-      : `${server.package?.name ?? 'Tanpa paket'} · aktif sampai ${tanggal(server.expiresAt)}`;
+    const kunci = [server.name, server.status, server.phone, server.expiresAt, server.package?.name].join('|');
+    if (kunci === kunciKepala) return;
+    kunciKepala = kunci;
 
-    const tampilPesan = server.message && server.status !== 'online';
-    $('#sMessage').innerHTML = tampilPesan ? html`<div class="alert alert-warn" style="margin-bottom:18px">${server.message}</div>`.s : '';
+    const hariSisa = Math.floor((server.expiresAt - Date.now()) / 86400000);
+    const segera = !server.expired && hariSisa <= 3;
+
+    $('#sKicker').textContent = server.package ? `Paket ${server.package.name}` : 'Tanpa paket';
+    $('#sNama').textContent = server.name;
+    $('#sMeta').innerHTML = html`
+      ${server.phone ? html`<span class="mono">${server.phone}</span>` : html`<span>Belum ada nomor</span>`}
+      <span>${server.expired ? 'Masa aktif habis' : html`Aktif s/d ${tanggal(server.expiresAt)}`}</span>
+      ${server.expired ? '' : html`<span class="sisa ${raw(segera ? 'segera' : '')}">${sisaWaktu(server.expiresAt)}</span>`}`.s;
+    $('#sLencana').innerHTML = badgeStatus(server).s;
     app.setJudul(server.name);
   }
 
-  // -------------------------------------------------------------------------
-  // Kartu koneksi (nomor WhatsApp)
-  // -------------------------------------------------------------------------
+  function gambarPesan() {
+    const tampil = server.message && server.status !== 'online';
+    $('#sPesan').innerHTML = tampil
+      ? html`<div class="catatan-peringatan" role="status">${ikon.info}<span>${server.message}</span></div>`.s
+      : '';
+  }
 
+  // -------------------------------------------------------------------------
+  // 5.7 — Panel pairing / kartu koneksi
+  // -------------------------------------------------------------------------
   function gambarKoneksi(paksa = false) {
-    const kunci = [server.phone, server.status, server.pairingCode, server.qrDataUrl, server.expired, metode].join('|');
+    const kunci = [server.phone, server.status, server.pairingCode, server.qrDataUrl, server.pendingPhone, server.expired, metode].join('|');
     if (!paksa && kunci === kunciKoneksi) return;
     kunciKoneksi = kunci;
 
-    const kartu = $('#connCard');
-    const judulKartu = html`<div class="card-title"><h3>Nomor WhatsApp</h3>${badgeStatus(server)}</div>`;
+    const kartu = $('#kartuKoneksi');
 
-    // Sudah terhubung ke nomor
+    // (1) Sudah tertaut ke nomor -> kartu koneksi
     if (server.phone) {
       const jalan = sedangJalan(server.status);
       kartu.innerHTML = html`
-        ${judulKartu}
-        <div class="phone-big">${server.phone}</div>
-        <p class="muted small">${server.lastOnlineAt ? `Terakhir online ${tanggal(server.lastOnlineAt, { jam: true })}` : 'Belum pernah online'}</p>
-        ${server.expired ? html`<div class="alert alert-error" style="margin-top:14px">Masa aktif habis. Perpanjang server untuk menyalakan bot lagi.</div>` : ''}
-        <div class="control-row">
-          ${jalan
-            ? html`<button class="btn btn-soft" data-aksi="stop" type="button">Matikan</button>
-                   <button class="btn btn-soft" data-aksi="restart" type="button">Nyalakan ulang</button>`
-            : html`<button class="btn btn-success" data-aksi="start" type="button" ${server.expired ? raw('disabled') : ''}>Nyalakan</button>`}
-          <button class="btn btn-danger" data-aksi="logout" type="button">Lepas nomor</button>
-        </div>
-        <p class="hint" style="margin-top:14px">Lepas nomor = logout bot dari WhatsApp. Setelah itu server bisa dihubungkan ke nomor lain.</p>`.s;
+        <header class="slug"><span class="slug-judul">Nomor WhatsApp</span><span class="slug-meta">tertaut</span></header>
+        <div class="kartu-isi">
+          <div class="waktu-angka" style="font-size:34px;overflow-wrap:anywhere">${server.phone}</div>
+          <p class="catatan-mini">${
+            server.lastOnlineAt ? html`Terakhir online ${tanggal(server.lastOnlineAt, { jam: true })}.` : 'Belum pernah online.'
+          }</p>
+          ${server.expired ? html`<div class="catatan-bahaya" style="margin-top:14px">${ikon.peringatan}<span>Masa aktif habis. Perpanjang server untuk menyalakan bot lagi.</span></div>` : ''}
+          <div class="aksi-jpm" style="margin-top:18px">
+            ${jalan
+              ? html`<button class="btn btn-sekunder" data-aksi="stop" type="button">${ikon.henti} Matikan</button>
+                     <button class="btn btn-sekunder" data-aksi="restart" type="button">${ikon.segar} Nyalakan ulang</button>`
+              : html`<button class="btn btn-utama" data-aksi="start" type="button" ${server.expired ? raw('disabled') : ''}>${ikon.putar} Nyalakan</button>`}
+            <button class="btn btn-bahaya" data-aksi="logout" type="button" style="margin-left:auto">${ikon.kunci} Lepas nomor</button>
+          </div>
+          <p class="catatan-mini">Lepas nomor = logout bot dari WhatsApp. Setelah itu server bisa ditautkan ke nomor lain.</p>
+        </div>`.s;
       return;
     }
 
-    // Masa aktif habis & belum ada nomor
+    // (2) Masa aktif habis & belum ada nomor
     if (server.expired) {
-      kartu.innerHTML = html`${judulKartu}<div class="alert alert-error">Masa aktif server habis. Perpanjang dulu untuk menghubungkan nomor.</div>`.s;
-      return;
-    }
-
-    // Sedang proses login
-    if (['starting', 'pairing', 'qr', 'connecting'].includes(server.status)) {
-      let isi;
-      if (server.pairingCode) {
-        isi = html`
-          <p class="card-sub">Masukkan kode ini di WhatsApp nomor <b>${server.pendingPhone}</b>.</p>
-          <div class="pair-code"><b>${server.pairingCode}</b><button class="btn btn-soft btn-sm" data-copy type="button">Salin</button></div>
-          <ol class="steps-list">
-            <li><span>Buka <b>WhatsApp</b> di HP nomor tersebut.</span></li>
-            <li><span>Ketuk <b>&#8942;</b> atau <b>Setelan</b>, lalu <b>Perangkat tertaut</b> &rsaquo; <b>Tautkan perangkat</b>.</span></li>
-            <li><span>Pilih <b>Tautkan dengan nomor telepon saja</b>, lalu ketik kode di atas.</span></li>
-          </ol>`;
-      } else if (server.qrDataUrl) {
-        isi = html`
-          <p class="card-sub">Scan QR ini dari WhatsApp di HP yang nomornya mau dijadikan bot.</p>
-          <div class="qr-box"><img src="${server.qrDataUrl}" alt="QR code login WhatsApp" width="240" height="240"></div>
-          <ol class="steps-list">
-            <li><span>Buka <b>WhatsApp</b> &rsaquo; <b>Perangkat tertaut</b> &rsaquo; <b>Tautkan perangkat</b>.</span></li>
-            <li><span>Arahkan kamera ke QR di atas. QR berganti otomatis kalau kedaluwarsa.</span></li>
-          </ol>`;
-      } else {
-        isi = html`<div class="waiting"><div class="spinner"></div><span>${server.method === 'qr' ? 'Menyiapkan QR code ...' : 'Menyiapkan kode pairing ...'}</span></div>`;
-      }
-
       kartu.innerHTML = html`
-        ${judulKartu}
-        ${isi}
-        <p class="hint" style="margin-bottom:14px">Halaman ini berubah otomatis setelah nomor tersambung.</p>
-        <button class="btn btn-ghost btn-sm" data-aksi="cancel" type="button">Batalkan</button>`.s;
+        <header class="slug"><span class="slug-judul">Tautkan nomor</span><span class="slug-meta">kedaluwarsa</span></header>
+        <div class="kartu-isi"><div class="catatan-bahaya">${ikon.peringatan}<span>Masa aktif server habis. Perpanjang dulu untuk menautkan nomor.</span></div></div>`.s;
       return;
     }
 
-    // Belum terhubung -> form hubungkan
-    kartu.innerHTML = html`
-      ${judulKartu}
-      <p class="card-sub">Hubungkan nomor yang mau dijadikan bot. Sebaiknya pakai nomor cadangan khusus jualan.</p>
-      <div class="method-toggle" role="group" aria-label="Cara menghubungkan">
-        <button type="button" data-metode="pairing" class="${metode === 'pairing' ? 'on' : ''}" aria-pressed="${metode === 'pairing'}">Pairing code</button>
-        <button type="button" data-metode="qr" class="${metode === 'qr' ? 'on' : ''}" aria-pressed="${metode === 'qr'}">Scan QR</button>
-      </div>
-      <form id="connectForm" novalidate>
-        ${metode === 'pairing'
-          ? html`
-            <div class="field">
-              <label for="phoneInput">Nomor WhatsApp</label>
-              <input class="input input-mono" id="phoneInput" name="phone" inputmode="numeric" autocomplete="tel" placeholder="6281234567890" required>
-              <span class="hint">Pakai kode negara tanpa tanda +. Awalan 0 otomatis diganti 62.</span>
-            </div>`
-          : html`<p class="hint" style="margin-bottom:16px">QR muncul di sini setelah kamu menekan tombol. Siapkan HP yang nomornya mau dijadikan bot.</p>`}
-        <button class="btn btn-primary btn-block" type="submit" id="connectBtn">${metode === 'pairing' ? 'Dapatkan kode pairing' : 'Tampilkan QR'}</button>
-      </form>`.s;
-  }
-
-  // -------------------------------------------------------------------------
-  // Kartu masa aktif
-  // -------------------------------------------------------------------------
-
-  function gambarMasa() {
-    const kunci = `${server.expiresAt}|${server.package?.id}`;
-    if (kunci === kunciMasa) return;
-    kunciMasa = kunci;
-
-    $('#expCard').innerHTML = html`
-      <div class="card-title"><h3>Masa aktif</h3>${server.expired ? html`<span class="badge badge-bad">Habis</span>` : ''}</div>
-      <dl class="kv">
-        <div><dt>Paket</dt><dd>${server.package?.name ?? '-'}</dd></div>
-        <div><dt>Aktif sampai</dt><dd>${tanggal(server.expiresAt, { jam: true })}</dd></div>
-        <div><dt>Sisa</dt><dd>${sisaWaktu(server.expiresAt)}</dd></div>
-      </dl>
-      ${packages.length
-        ? html`
-          <form id="renewForm" style="margin-top:18px">
-            <label class="label" for="renewPkg">Perpanjang</label>
-            <div class="input-group" style="margin-top:7px">
-              <select class="select" id="renewPkg" name="packageId">${opsiPaket(packages)}</select>
-              <button class="btn btn-soft" type="submit" id="renewBtn">Perpanjang</button>
+    // (3) Sedang proses login (punya kode / QR)
+    const sedangLogin = ['starting', 'pairing', 'qr', 'connecting'].includes(server.status);
+    if (sedangLogin && (server.pairingCode || server.qrDataUrl)) {
+      kartu.innerHTML = html`
+        <header class="slug"><span class="slug-judul">Tautkan nomor</span><span class="slug-meta">Langkah 2 dari 3</span></header>
+        <div class="pairing">
+          <div class="pairing-kode">
+            <div class="pairing-atas">
+              <p class="label" id="lblKode">${server.pairingCode ? 'Kode pairing kamu' : 'Scan QR dari HP lain'}</p>
+              <div class="tab-ruas" role="tablist" aria-label="Cara menautkan">
+                <button role="tab" type="button" data-metode="pairing" aria-selected="${raw(String(!!server.pairingCode))}">Kode</button>
+                <button role="tab" type="button" data-metode="qr" aria-selected="${raw(String(!!server.qrDataUrl))}">Scan QR</button>
+              </div>
             </div>
-          </form>`
-        : ''}`.s;
+            ${server.pairingCode ? gambarTilKode(server.pairingCode) : gambarQr(server.qrDataUrl)}
+            <p class="nomor-terkunci">${ikon.kunci}<span>Nomor <span class="mono">${server.pendingPhone ?? ''}</span> dikunci untuk server ini. 1 nomor = 1 server.</span><a href="#" data-aksi="cancel">Ganti nomor</a></p>
+          </div>
+          <div class="pairing-samping">
+            <div class="waktu-kode">
+              <span class="kicker">Berlaku</span>
+              <b class="waktu-angka" data-countdown>01:00</b>
+              <div class="bar bar-tipis"><i data-countdown-bar style="width:100%"></i></div>
+            </div>
+            ${server.pairingCode
+              ? html`<button class="btn btn-utama" data-aksi="salin" type="button">${ikon.salin} Salin kode</button>`
+              : ''}
+            <button class="btn btn-sekunder" data-aksi="kode-baru" type="button">${ikon.segar} Kode baru</button>
+          </div>
+        </div>
+        <ol class="langkah-baris">
+          <li><span class="langkah-marker" aria-hidden="true"></span><span>Buka WhatsApp di HP, masuk ke <span class="jalur-menu">Perangkat tertaut</span>.</span></li>
+          <li><span class="langkah-marker" aria-hidden="true"></span><span>Ketuk <b>Tautkan perangkat</b> ${server.pairingCode ? html`&rsaquo; <b>Tautkan dengan nomor telepon</b>` : '& arahkan kamera ke QR'}.</span></li>
+          <li class="kini"><span class="langkah-marker" aria-hidden="true"></span><span>${server.pairingCode ? 'Ketik 8 karakter di atas. Kode baru dibuat otomatis kalau waktunya habis.' : 'QR berganti otomatis kalau kedaluwarsa.'}</span></li>
+        </ol>`.s;
+
+      // reset hitung mundur saat kode berganti
+      const kodeSekarang = server.pairingCode || server.qrDataUrl || '';
+      if (kodeSekarang !== kodeTeks) {
+        kodeTeks = kodeSekarang;
+        kodeMulai = Date.now();
+      }
+      return;
+    }
+
+    // (4) Menyiapkan
+    if (sedangLogin) {
+      kartu.innerHTML = html`
+        <header class="slug"><span class="slug-judul">Tautkan nomor</span><span class="slug-meta">menyiapkan</span></header>
+        <div class="kartu-isi"><div class="memuat">${server.method === 'qr' ? 'Menyiapkan QR' : 'Menyiapkan kode'}<span class="kursor"></span></div>
+          <div class="aksi-jpm"><button class="btn btn-hantu btn-s" data-aksi="cancel" type="button">Batalkan</button></div>
+        </div>`.s;
+      return;
+    }
+
+    // (5) Belum ada nomor -> form sambung
+    kodeTeks = '';
+    kartu.innerHTML = html`
+      <header class="slug"><span class="slug-judul">Tautkan nomor</span><span class="slug-meta">Langkah 1 dari 3</span></header>
+      <div class="kartu-isi">
+        <div class="pairing-atas">
+          <p class="label" id="lblSambung">Cara menautkan</p>
+          <div class="tab-ruas" role="tablist" aria-label="Cara menautkan">
+            <button role="tab" type="button" data-metode="pairing" aria-selected="${raw(String(metode === 'pairing'))}">Kode</button>
+            <button role="tab" type="button" data-metode="qr" aria-selected="${raw(String(metode === 'qr'))}">Scan QR</button>
+          </div>
+        </div>
+        <p class="catatan-mini" style="margin-top:0;margin-bottom:16px">Tautkan nomor yang mau dijadikan bot. Sebaiknya pakai nomor cadangan khusus jualan.</p>
+        <form id="formSambung" novalidate>
+          ${metode === 'pairing'
+            ? html`<div class="field" style="max-width:420px">
+                <label class="label" for="telepon">Nomor WhatsApp</label>
+                <div class="isian-gabung"><span class="akhiran akhiran-depan">+62</span><input class="isian mono" id="telepon" name="phone" inputmode="numeric" autocomplete="tel" placeholder="81234567890" required></div>
+                <p class="bantu">Tulis tanpa 0 di depan. Contoh: 81234567890.</p>
+              </div>`
+            : html`<p class="catatan-mini" style="margin-top:0">QR muncul di sini setelah kamu menekan tombol. Siapkan HP yang nomornya mau dijadikan bot.</p>`}
+          <div class="aksi-jpm">
+            <button class="btn btn-utama" type="submit" id="btnSambung">${metode === 'pairing' ? 'Minta kode pairing' : 'Tampilkan QR'} ${ikon.panah}</button>
+          </div>
+        </form>
+      </div>`.s;
+  }
+
+  function gambarTilKode(kode) {
+    const bersih = String(kode).replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+    const karakter = bersih.split('');
+    const til = [];
+    karakter.forEach((c, i) => {
+      if (i === 4) til.push(html`<i aria-hidden="true"></i>`);
+      til.push(html`<span>${c}</span>`);
+    });
+    const label = karakter.join(' ');
+    return html`<div class="kode" role="text" aria-label="Kode pairing ${label}">${til}</div>`;
+  }
+
+  function gambarQr(dataUrl) {
+    return html`<div class="qr-kotak"><img src="${dataUrl}" alt="QR code login WhatsApp" width="264" height="264"></div>
+      <p class="qr-ket">Scan dari HP lain: WhatsApp › Perangkat tertaut › Tautkan perangkat.</p>`;
   }
 
   // -------------------------------------------------------------------------
-  // Kartu pengaturan
+  // Pengaturan bot (field yang sudah ada)
   // -------------------------------------------------------------------------
-
   function gambarPengaturan() {
     const s = server.settings;
-    $('#settingsCard').innerHTML = html`
-      <div class="card-title"><h3>Pengaturan bot</h3></div>
-      <p class="card-sub">Pengganti file config.js. Kalau bot sedang jalan, bot dinyalakan ulang otomatis setelah disimpan.</p>
-      <form id="settingsForm" class="form-grid" novalidate>
+    $('#isiPengaturan').innerHTML = html`
+      <p class="catatan-mini" style="margin-top:0">Kalau bot sedang jalan, bot dinyalakan ulang otomatis setelah disimpan.</p>
+      <form id="formPengaturan" class="grid-isian" style="margin-top:16px" novalidate>
         <div class="field">
-          <label for="namaBot">Nama bot</label>
-          <input class="input" id="namaBot" name="namaBot" maxlength="40" value="${s.namaBot}" required>
-          <span class="hint">Muncul di menu & ping.</span>
+          <label class="label" for="namaBot">Nama bot</label>
+          <input class="isian" id="namaBot" name="namaBot" maxlength="40" value="${s.namaBot}" required>
+          <p class="bantu">Muncul di .menu & .ping.</p>
         </div>
         <div class="field">
-          <label for="prefix">Prefix perintah</label>
-          <input class="input input-mono" id="prefix" name="prefix" maxlength="10" value="${s.prefix.join(' ')}" required>
-          <span class="hint">1-5 simbol, pisahkan dengan spasi. Contoh: <code>. #</code></span>
+          <label class="label" for="prefix">Prefix perintah</label>
+          <input class="isian mono" id="prefix" name="prefix" maxlength="10" value="${s.prefix.join(' ')}" required>
+          <p class="bantu">1–5 simbol, pisahkan dengan spasi. Contoh: <span class="perintah">.</span> <span class="perintah">#</span></p>
         </div>
         <div class="field">
-          <label for="jedaKirim">Jeda kirim (detik)</label>
-          <input class="input" id="jedaKirim" name="jedaKirim" type="number" min="5" max="600" value="${s.jedaKirim}" required>
-          <span class="hint">Jeda antar grup/kontak. Makin besar makin aman dari banned. Minimal 5.</span>
+          <label class="label" for="jedaKirim">Jeda antar grup <span class="opsi">min. 5 detik</span></label>
+          <div class="isian-gabung"><input class="isian mono" id="jedaKirim" name="jedaKirim" type="number" min="5" max="600" value="${s.jedaKirim}" required><span class="akhiran">Detik</span></div>
+          <p class="bantu">Jeda antar pengiriman ke tiap grup, dalam detik.</p>
         </div>
         <div class="field">
-          <label for="jedaPutaran">Jeda putaran AutoJPM (detik)</label>
-          <input class="input" id="jedaPutaran" name="jedaPutaran" type="number" min="60" max="86400" value="${s.autojpm.jedaPutaran}" required>
-          <span class="hint" id="jedaPutaranInfo"></span>
+          <label class="label" for="jedaPutaran">Jeda putaran Auto JPM <span class="opsi">min. 10 menit</span></label>
+          <div class="isian-gabung"><input class="isian mono" id="jedaPutaran" name="jedaPutaran" type="number" min="60" max="86400" value="${s.autojpm.jedaPutaran}" required><span class="akhiran">Detik</span></div>
+          <p class="bantu" id="infoPutaran"></p>
         </div>
         <div class="field">
-          <label for="mode">Mode</label>
-          <select class="select" id="mode" name="mode">
+          <label class="label" for="mode">Mode</label>
+          <select class="isian" id="mode" name="mode">
             <option value="production" ${s.mode === 'production' ? raw('selected') : ''}>Normal — pesan benar-benar dikirim</option>
             <option value="development" ${s.mode === 'development' ? raw('selected') : ''}>Uji coba — pesan massal tidak dikirim</option>
           </select>
-          <span class="hint">Mode uji coba hanya mencatat ke terminal, cocok untuk mencoba alurnya.</span>
+          <p class="bantu">Mode uji coba hanya mencatat ke cetakan, cocok untuk coba alurnya.</p>
         </div>
         <div class="field">
-          <label for="nomorOwner">Owner tambahan</label>
-          <input class="input input-mono" id="nomorOwner" name="nomorOwner" value="${s.nomorOwner.join(', ')}" placeholder="628111, 628222">
-          <span class="hint">Nomor lain yang boleh menyuruh bot. Pisahkan dengan koma. Nomor bot sendiri selalu boleh.</span>
+          <label class="label" for="nomorOwner">Owner tambahan</label>
+          <input class="isian mono" id="nomorOwner" name="nomorOwner" value="${s.nomorOwner.join(', ')}" placeholder="628111, 628222">
+          <p class="bantu">Nomor lain yang boleh menyuruh bot. Pisahkan dengan koma. Nomor bot sendiri selalu boleh.</p>
         </div>
-        <div class="field full">
-          <label class="check"><input type="checkbox" name="tagSemua" ${s.autojpm.tagSemua ? raw('checked') : ''}><span>AutoJPM ikut tag semua anggota grup</span></label>
+        <div class="field penuh">
+          <label class="saklar"><input type="checkbox" name="tagSemua" ${s.autojpm.tagSemua ? raw('checked') : ''}><span>Auto JPM ikut tag semua anggota grup (hidetag)</span></label>
         </div>
-        <div class="full"><button class="btn btn-primary" type="submit" id="settingsBtn">Simpan pengaturan</button></div>
+        <div class="penuh"><button class="btn btn-utama" type="submit" id="btnPengaturan">Simpan pengaturan</button></div>
       </form>`.s;
 
     const info = () => {
       const detik = Number($('#jedaPutaran').value) || 0;
-      $('#jedaPutaranInfo').textContent = `Sekitar ${Math.round(detik / 60)} menit. Waktu tunggu sebelum AutoJPM mengulang.`;
+      $('#infoPutaran').textContent = `Sekitar ${Math.round(detik / 60)} menit. Waktu tunggu sebelum Auto JPM mengulang.`;
     };
     $('#jedaPutaran').addEventListener('input', info);
     info();
   }
 
   // -------------------------------------------------------------------------
-  // Terminal
+  // 5.13 — Cetakan langsung (log)
   // -------------------------------------------------------------------------
+  const TAG = {
+    green: ['t-ok', 'OK'],
+    yellow: ['t-sys', 'SYS'],
+    blue: ['t-sys', 'SYS'],
+    red: ['t-err', 'GAGAL'],
+  };
+  function barisLog(l) {
+    let [cls, tag] = TAG[l.level] || ['t-sys', 'SYS'];
+    const putus = l.level === 'red' && /terputus|putus|dikeluarkan|logout|401/i.test(l.text);
+    if (putus) [cls, tag] = ['t-putus', 'PUTUS'];
+    const err = cls === 't-err' || cls === 't-putus';
+    const d = new Date(l.ts);
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    const ss = String(d.getSeconds()).padStart(2, '0');
+    return html`<li><time>${hh}.${mm}<span class="dt">.${ss}</span></time><b class="t ${raw(cls)}">${tag}</b><span class="pesan ${raw(err ? 'gagal' : '')}">${l.text}</span></li>`;
+  }
 
   async function muatLog() {
     const { logs } = await api(`/servers/${id}/logs?after=${logTerakhir}`);
     if (!logs.length) return;
-
-    const dekatBawah = terminal.scrollHeight - terminal.scrollTop - terminal.clientHeight < 40;
-    if (logTerakhir === 0) terminal.innerHTML = '';
-
-    terminal.insertAdjacentHTML(
-      'beforeend',
-      logs.map((l) => html`<div class="ln"><span class="t">${jam(l.ts)}</span><span class="${l.level}">${l.text}</span></div>`.s).join(''),
-    );
-    while (terminal.childElementCount > 400) terminal.firstElementChild.remove();
+    const dekatBawah = cetak.scrollHeight - cetak.scrollTop - cetak.clientHeight < 60;
+    logEl.insertAdjacentHTML('beforeend', logs.map(barisLog).map((r) => r.s).join(''));
+    logs.forEach((l) => semuaLog.push(l));
+    while (semuaLog.length > 1000) semuaLog.shift();
+    while (logEl.childElementCount > 400) logEl.firstElementChild.remove();
     logTerakhir = logs[logs.length - 1].id;
-    if (dekatBawah) terminal.scrollTop = terminal.scrollHeight;
+    if (!tahanGulir && dekatBawah) cetak.scrollTop = cetak.scrollHeight;
   }
 
   // -------------------------------------------------------------------------
   // Gambar semua & pantau
   // -------------------------------------------------------------------------
-
   function gambarSemua(paksa = false) {
     gambarKepala();
+    gambarPesan();
     gambarKoneksi(paksa);
-    gambarMasa();
   }
 
   gambarSemua(true);
   gambarPengaturan();
   await muatLog().catch(() => {});
-  terminal.scrollTop = terminal.scrollHeight;
+  cetak.scrollTop = cetak.scrollHeight;
 
   const pantau = setInterval(async () => {
-    if (document.hidden || berhenti) return;
+    if (document.hidden || berhenti || !masihAktif()) return;
     try {
       const tadinyaTanpaNomor = !server.phone;
       ({ server } = await api(`/servers/${id}`));
-      if (berhenti) return;
+      if (berhenti || !masihAktif()) return;
       gambarSemua();
-      if (tadinyaTanpaNomor && server.phone) toast(`Nomor ${server.phone} berhasil terhubung!`);
+      if (tadinyaTanpaNomor && server.phone) toast(`Nomor ${server.phone} berhasil terhubung!`, 'ok', { kicker: 'Tertaut' });
       await muatLog();
     } catch (error) {
       if (error.status === 404) {
         berhenti = true;
-        location.hash = '#/servers';
+        app.pergi('/dashboard');
       }
     }
   }, JEDA_PANTAU);
 
+  const timerKode = setInterval(() => {
+    if (!kodeMulai) return;
+    const angka = halaman.querySelector('[data-countdown]');
+    if (!angka) return;
+    const sisa = Math.max(0, BERLAKU_KODE - Math.floor((Date.now() - kodeMulai) / 1000));
+    angka.textContent = `${String(Math.floor(sisa / 60)).padStart(2, '0')}:${String(sisa % 60).padStart(2, '0')}`;
+    const bar = halaman.querySelector('[data-countdown-bar]');
+    if (bar) bar.style.width = `${(sisa / BERLAKU_KODE) * 100}%`;
+  }, 1000);
+
   // -------------------------------------------------------------------------
   // Aksi
   // -------------------------------------------------------------------------
-
   async function jalankan(tombol, path, body) {
     try {
       const hasil = await sambilMemuat(tombol, () => api(`/servers/${id}${path}`, { method: 'POST', body }));
@@ -501,38 +682,50 @@ export async function detailServer({ view, params, app }) {
     }
   }
 
+  function mintaKode(m) {
+    const telepon = server.pendingPhone;
+    if (!telepon) return;
+    jalankan(null, '/connect', { method: m, phone: telepon });
+  }
+
   halaman.addEventListener('click', async (e) => {
     const metodeBtn = e.target.closest('[data-metode]');
     if (metodeBtn) {
-      metode = metodeBtn.dataset.metode;
-      gambarKoneksi(true);
+      const m = metodeBtn.dataset.metode;
+      // Saat sedang login: ganti metode = minta ulang dengan nomor yang sama.
+      if (server.pendingPhone && ['starting', 'pairing', 'qr', 'connecting'].includes(server.status)) {
+        if ((m === 'pairing') !== !!server.pairingCode) mintaKode(m);
+      } else {
+        metode = m;
+        gambarKoneksi(true);
+      }
       return;
     }
 
-    if (e.target.closest('[data-copy]')) {
-      salin(server.pairingCode.replace(/-/g, ''));
-      return;
-    }
+    const aksiEl = e.target.closest('[data-aksi]');
+    if (!aksiEl) return;
+    e.preventDefault();
+    const aksi = aksiEl.dataset.aksi;
 
-    const tombol = e.target.closest('[data-aksi]');
-    if (!tombol) return;
-    const aksi = tombol.dataset.aksi;
-
-    if (aksi === 'start') await jalankan(tombol, '/start');
-    if (aksi === 'restart') await jalankan(tombol, '/restart');
-    if (aksi === 'cancel') await jalankan(tombol, '/cancel');
+    if (aksi === 'salin') return salin(String(server.pairingCode).replace(/[^A-Za-z0-9]/g, ''));
+    if (aksi === 'kode-baru') return mintaKode(server.pairingCode ? 'pairing' : 'qr');
+    if (aksi === 'start') return void jalankan(aksiEl, '/start');
+    if (aksi === 'restart') return void jalankan(aksiEl, '/restart');
+    if (aksi === 'cancel') return void jalankan(aksiEl, '/cancel');
     if (aksi === 'stop') {
-      const ok = await konfirmasi({ judul: 'Matikan bot?', pesan: 'AutoJPM dan autoreply yang sedang berjalan ikut berhenti.', ok: 'Matikan' });
-      if (ok) await jalankan(tombol, '/stop');
+      if (await konfirmasi({ judul: 'Matikan bot?', slug: 'Matikan', pesan: 'Auto JPM dan autoreply yang sedang berjalan ikut berhenti.', ok: 'Matikan' }))
+        await jalankan(aksiEl, '/stop');
+      return;
     }
     if (aksi === 'logout') {
       const ok = await konfirmasi({
         judul: 'Lepas nomor dari server?',
-        pesan: `Bot logout dari WhatsApp nomor ${server.phone} dan sesinya dihapus. Kamu perlu pairing ulang untuk memakainya lagi.\n\nKalau bot sedang mati, hapus juga perangkat tertaut di HP kamu secara manual.`,
-        ok: 'Lepas nomor',
+        slug: 'Lepas nomor',
+        pesan: `Bot logout dari WhatsApp nomor ${server.phone} dan sesinya dihapus. Kamu perlu pairing ulang untuk memakainya lagi. Kalau bot sedang mati, hapus juga perangkat tertaut di HP kamu secara manual.`,
+        ok: 'Ya, lepas nomor',
         bahaya: true,
       });
-      if (ok && (await jalankan(tombol, '/logout'))) toast('Nomor dilepas. Server siap dihubungkan ke nomor lain.');
+      if (ok && (await jalankan(aksiEl, '/logout'))) toast('Nomor dilepas. Server siap ditautkan ke nomor lain.');
     }
   });
 
@@ -540,34 +733,20 @@ export async function detailServer({ view, params, app }) {
     e.preventDefault();
     const form = e.target;
 
-    if (form.id === 'connectForm') {
+    if (form.id === 'formSambung') {
       const body = { method: metode };
       if (metode === 'pairing') {
         body.phone = form.elements.phone.value.trim();
-        if (!body.phone) return toast('Isi nomor WhatsApp dulu.', 'error');
+        if (!body.phone) return void toast('Isi nomor WhatsApp dulu.', 'error');
       }
-      await jalankan(form.querySelector('#connectBtn'), '/connect', body);
+      await jalankan(form.querySelector('#btnSambung'), '/connect', body);
+      return;
     }
 
-    if (form.id === 'renewForm') {
-      const paket = packages.find((p) => String(p.id) === form.elements.packageId.value);
-      const ok = await konfirmasi({
-        judul: `Perpanjang ${paket.days} hari?`,
-        pesan: `Paket ${paket.name} seharga ${rupiah(paket.price)} dipotong dari saldo (saldo kamu ${rupiah(app.user.balance)}).`,
-        ok: 'Perpanjang',
-      });
-      if (!ok) return;
-      const hasil = await jalankan(form.querySelector('#renewBtn'), '/renew', { packageId: paket.id });
-      if (hasil) {
-        toast(hasil.message);
-        app.muatUlangUser().catch(() => {});
-      }
-    }
-
-    if (form.id === 'settingsForm') {
+    if (form.id === 'formPengaturan') {
       const d = dataForm(form);
       try {
-        const hasil = await sambilMemuat(form.querySelector('#settingsBtn'), () =>
+        const hasil = await sambilMemuat(form.querySelector('#btnPengaturan'), () =>
           api(`/servers/${id}/settings`, {
             method: 'PUT',
             body: {
@@ -583,16 +762,97 @@ export async function detailServer({ view, params, app }) {
         server = hasil.server;
         gambarSemua(true);
         gambarPengaturan();
-        toast(hasil.message);
+        toast(hasil.message || 'Pengaturan disimpan.');
       } catch (error) {
         toast(error.message, 'error');
       }
     }
   });
 
-  $('#renameBtn').addEventListener('click', async () => {
+  // Tahan gulir & unduh
+  $('#btnTahan').addEventListener('click', (e) => {
+    tahanGulir = !tahanGulir;
+    e.currentTarget.setAttribute('aria-pressed', String(tahanGulir));
+    e.currentTarget.classList.toggle('tekan', tahanGulir);
+    if (!tahanGulir) cetak.scrollTop = cetak.scrollHeight;
+  });
+  $('#btnUnduh').addEventListener('click', () => {
+    const teks = semuaLog
+      .map((l) => `${jam(l.ts)}  [${(l.level || 'sys').toUpperCase()}]  ${l.text}`)
+      .join('\n');
+    const blob = new Blob([teks || 'Belum ada log.'], { type: 'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `log-server-${id}.txt`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
+
+  // Perpanjang
+  $('#btnPerpanjang').addEventListener('click', async () => {
+    if (!packages.length) return void toast('Belum ada paket untuk perpanjang.', 'error');
+    const qrisAktif = !!app.site?.qris?.enabled;
+    const data = await formDialog({
+      judul: 'Perpanjang server',
+      slug: 'Perpanjang',
+      pesan: qrisAktif
+        ? `Saldo kamu ${rupiah(app.user.balance)}. Perpanjangan dipotong dari saldo; kalau kurang, bisa bayar lewat QRIS.`
+        : `Saldo kamu ${rupiah(app.user.balance)}. Perpanjangan dipotong dari saldo.`,
+      fields: [{ name: 'packageId', label: 'Paket', type: 'select', value: server.package?.id ?? packages[0].id, options: packages.map((p) => ({ value: p.id, label: `${p.name} — ${p.days} hari — ${rupiah(p.price)}` })) }],
+      ok: 'Perpanjang',
+    });
+    if (!data) return;
+    const paket = packages.find((p) => String(p.id) === String(data.packageId));
+    if (!paket) return;
+
+    // Saldo cukup -> potong saldo seperti biasa.
+    if (app.user.balance >= paket.price) {
+      const hasil = await jalankan(null, '/renew', { packageId: paket.id });
+      if (hasil) {
+        toast(hasil.message || 'Server diperpanjang.');
+        app.muatUlangUser().catch(() => {});
+      }
+      return;
+    }
+
+    // Saldo kurang + QRIS aktif -> tawarkan bayar lewat QRIS.
+    if (qrisAktif) {
+      const ok = await konfirmasi({
+        judul: 'Bayar lewat QRIS?',
+        slug: 'Perpanjang',
+        pesan: `Saldo kurang ${rupiah(paket.price - app.user.balance)}. Bayar kekurangannya lewat QRIS untuk memperpanjang ${paket.days} hari.`,
+        ok: 'Buat QRIS',
+      });
+      if (!ok) return;
+      try {
+        const { invoice } = await kirimTagihan('/payment/renew', { body: { serverId: id, packageId: paket.id } });
+        app.pergi(`/dashboard/invoice/${invoice.orderId}`);
+      } catch (error) {
+        if (error.code === 'SALDO_CUKUP') {
+          const hasil = await jalankan(null, '/renew', { packageId: paket.id });
+          if (hasil) {
+            toast(hasil.message || 'Server diperpanjang.');
+            app.muatUlangUser().catch(() => {});
+          }
+        } else if (error.code === 'PENDING_EXISTS' && error.orderId) {
+          app.pergi(`/dashboard/invoice/${error.orderId}`);
+        } else {
+          toast(error.message, 'error');
+        }
+      }
+      return;
+    }
+
+    // Saldo kurang, QRIS mati -> arahkan ke isi saldo.
+    toast(`Saldo kurang ${rupiah(paket.price - app.user.balance)}. Isi saldo dulu.`, 'error');
+    app.pergi('/dashboard/saldo');
+  });
+
+  // Ganti nama
+  $('#btnGantiNama').addEventListener('click', async () => {
     const data = await formDialog({
       judul: 'Ganti nama server',
+      slug: 'Ganti nama',
       fields: [{ name: 'name', label: 'Nama server', value: server.name, required: true }],
     });
     if (!data) return;
@@ -605,9 +865,11 @@ export async function detailServer({ view, params, app }) {
     }
   });
 
-  $('#deleteBtn').addEventListener('click', async () => {
+  // Hapus
+  $('#btnHapus').addEventListener('click', async () => {
     const data = await formDialog({
       judul: 'Hapus server?',
+      slug: 'Hapus server',
       pesan: `Tindakan ini tidak bisa dibatalkan. Ketik nama server "${server.name}" untuk konfirmasi.`,
       fields: [{ name: 'confirm', label: 'Nama server', placeholder: server.name, required: true }],
       ok: 'Hapus permanen',
@@ -619,7 +881,7 @@ export async function detailServer({ view, params, app }) {
       berhenti = true;
       await api(`/servers/${id}`, { method: 'DELETE', body: data });
       toast('Server dihapus.');
-      location.hash = '#/servers';
+      app.pergi('/dashboard');
     } catch (error) {
       berhenti = false;
       toast(error.message, 'error');
@@ -629,5 +891,6 @@ export async function detailServer({ view, params, app }) {
   return () => {
     berhenti = true;
     clearInterval(pantau);
+    clearInterval(timerKode);
   };
 }

@@ -1,1 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="18" fill="#FF6B5B"/><text x="32" y="42" font-family="Arial, Helvetica, sans-serif" font-size="27" font-weight="800" text-anchor="middle" fill="#fff" letter-spacing="-1">VJ</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 48" width="64" height="48">
+  <mask id="takik">
+    <rect width="64" height="48" fill="#fff"/>
+    <circle cx="0" cy="24" r="7"/>
+    <circle cx="64" cy="24" r="7"/>
+  </mask>
+  <rect width="64" height="48" fill="#16130F" mask="url(#takik)"/>
+  <text x="32" y="35" text-anchor="middle" fill="#FFD60A" font-family="'Arial Narrow','Archivo',Arial,sans-serif" font-weight="900" font-size="30" letter-spacing="-1.5" style="font-stretch:condensed">VJ</text>
+</svg>

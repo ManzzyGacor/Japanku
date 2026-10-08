@@ -93,6 +93,132 @@ const MIGRASI = [
     value TEXT NOT NULL
   );
   `,
+  // --- MIGRASI[1]: katalog paket bertingkat (Uji Sinyal / Antena / Menara / Satelit) ---
+  // Menambah kolom "kode" (stabil, dipakai API & logika) dan "size_label" (label ukuran).
+  // Paket lama (Mingguan/Bulanan/3 Bulan) dinonaktifkan, lalu 3 tier bulanan dimasukkan.
+  `
+  ALTER TABLE packages ADD COLUMN code TEXT NOT NULL DEFAULT '';
+  ALTER TABLE packages ADD COLUMN size_label TEXT NOT NULL DEFAULT '';
+  CREATE UNIQUE INDEX idx_packages_code ON packages(code) WHERE code != '';
+
+  UPDATE packages SET active = 0 WHERE code = '';
+
+  INSERT INTO packages (code, name, size_label, description, days, price, active, sort, created_at)
+  SELECT 'antena', 'Antena', 'Server Kecil',
+         'Buat kamu yang baru mulai jasher. Semua mode JPM, jangkauan sampai 50 grup per putaran.',
+         30, 7000, 1, 1, CAST(strftime('%s','now') AS INTEGER) * 1000
+  WHERE NOT EXISTS (SELECT 1 FROM packages WHERE code = 'antena');
+
+  INSERT INTO packages (code, name, size_label, description, days, price, active, sort, created_at)
+  SELECT 'menara', 'Menara', 'Server Sedang',
+         'Untuk seller yang makin serius. Jangkauan sampai 200 grup per putaran dan 10 postingan tersimpan.',
+         30, 12000, 1, 2, CAST(strftime('%s','now') AS INTEGER) * 1000
+  WHERE NOT EXISTS (SELECT 1 FROM packages WHERE code = 'menara');
+
+  INSERT INTO packages (code, name, size_label, description, days, price, active, sort, created_at)
+  SELECT 'satelit', 'Satelit', 'Server Besar',
+         'Jangkauan penuh ke semua grup, 2 tugas otomatis sekaligus, dan 30 postingan tersimpan. Paling hemat per grup.',
+         30, 15000, 1, 3, CAST(strftime('%s','now') AS INTEGER) * 1000
+  WHERE NOT EXISTS (SELECT 1 FROM packages WHERE code = 'satelit');
+  `,
+  // --- MIGRASI[2]: tagihan pembayaran QRIS otomatis (AutoGopay) ---
+  `
+  CREATE TABLE invoices (
+    id               INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id         TEXT    NOT NULL UNIQUE,
+    user_id          INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    kind             TEXT    NOT NULL CHECK (kind IN ('topup', 'buy', 'renew')),
+    purpose          TEXT    NOT NULL DEFAULT '{}',
+    server_id        INTEGER REFERENCES servers(id) ON DELETE SET NULL,
+    subtotal         INTEGER NOT NULL,
+    fee              INTEGER NOT NULL DEFAULT 0,
+    amount           INTEGER NOT NULL,
+    gateway          TEXT    NOT NULL DEFAULT 'autogopay',
+    gateway_trx_id   TEXT    UNIQUE,
+    gateway_order_id TEXT    NOT NULL DEFAULT '',
+    gateway_status   TEXT    NOT NULL DEFAULT '',
+    qr_string        TEXT    NOT NULL DEFAULT '',
+    qr_url           TEXT    NOT NULL DEFAULT '',
+    checkout_url     TEXT    NOT NULL DEFAULT '',
+    status           TEXT    NOT NULL DEFAULT 'pending'
+                     CHECK (status IN ('pending', 'completed', 'expired', 'cancelled')),
+    result           TEXT    NOT NULL DEFAULT '',
+    result_note      TEXT    NOT NULL DEFAULT '',
+    note             TEXT    NOT NULL DEFAULT '',
+    handled_at       INTEGER,
+    recheck          INTEGER NOT NULL DEFAULT 0,
+    webhook_count    INTEGER NOT NULL DEFAULT 0,
+    last_webhook_at  INTEGER,
+    checked_at       INTEGER,
+    paid_at          INTEGER,
+    expires_at       INTEGER NOT NULL,
+    completed_at     INTEGER,
+    closed_at        INTEGER,
+    created_at       INTEGER NOT NULL
+  );
+  CREATE INDEX idx_invoices_user   ON invoices(user_id, id);
+  CREATE INDEX idx_invoices_status ON invoices(status, expires_at);
+  CREATE UNIQUE INDEX idx_invoices_satu_pending ON invoices(user_id) WHERE status = 'pending';
+  `,
+  // --- MIGRASI[3]: keamanan akun + free trial (Uji Sinyal) + anti-abuse ---
+  `
+  ALTER TABLE users ADD COLUMN email_verified_at INTEGER;
+  ALTER TABLE users ADD COLUMN email_canonical TEXT NOT NULL DEFAULT '';
+  ALTER TABLE users ADD COLUMN signup_ip TEXT NOT NULL DEFAULT '';
+  ALTER TABLE users ADD COLUMN signup_device TEXT NOT NULL DEFAULT '';
+  -- Akun Google sudah terverifikasi emailnya.
+  UPDATE users SET email_verified_at = created_at WHERE google_sub IS NOT NULL AND google_sub != '';
+
+  ALTER TABLE servers ADD COLUMN is_trial INTEGER NOT NULL DEFAULT 0;
+
+  -- Riwayat SETIAP nomor yang pernah berhasil pairing di situs ini (selamanya).
+  -- Dipakai untuk aturan "1 trial per nomor WhatsApp, selamanya".
+  CREATE TABLE nomor_riwayat (
+    phone         TEXT    PRIMARY KEY,
+    identity_hash TEXT    NOT NULL DEFAULT '',
+    first_server  INTEGER,
+    first_seen_at INTEGER NOT NULL
+  );
+  CREATE INDEX idx_nomor_identity ON nomor_riwayat(identity_hash) WHERE identity_hash != '';
+
+  -- Klaim trial. Satu baris per klaim; status melacak daur hidupnya.
+  CREATE TABLE trial_claims (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id      INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    server_id    INTEGER REFERENCES servers(id) ON DELETE SET NULL,
+    status       TEXT    NOT NULL DEFAULT 'pending_phone'
+                 CHECK (status IN ('pending_phone','active','ended','forfeited','reset')),
+    phone        TEXT,
+    phone_hash   TEXT,
+    ip_key       TEXT    NOT NULL DEFAULT '',
+    device_id    TEXT    NOT NULL DEFAULT '',
+    email_kunci  TEXT    NOT NULL DEFAULT '',
+    created_at   INTEGER NOT NULL,
+    activated_at INTEGER
+  );
+  CREATE INDEX idx_trial_user   ON trial_claims(user_id);
+  CREATE INDEX idx_trial_status ON trial_claims(status);
+  CREATE INDEX idx_trial_ip     ON trial_claims(ip_key);
+  CREATE INDEX idx_trial_device ON trial_claims(device_id);
+
+  -- Catatan peristiwa keamanan (pendaftaran per IP/perangkat), persisten supaya
+  -- batas tidak hilang saat server web restart.
+  CREATE TABLE security_events (
+    id     INTEGER PRIMARY KEY AUTOINCREMENT,
+    kunci  TEXT    NOT NULL,
+    jenis  TEXT    NOT NULL,
+    at     INTEGER NOT NULL
+  );
+  CREATE INDEX idx_sec_kunci ON security_events(jenis, kunci, at);
+
+  -- Paket trial "Uji Sinyal": active=0 supaya tidak muncul di daftar beli dan
+  -- tidak bisa dibeli (paketAktif menolak yang active=0). Hanya dipakai server
+  -- trial lewat kode 'uji'.
+  INSERT INTO packages (code, name, size_label, description, days, price, active, sort, created_at)
+  SELECT 'uji', 'Uji Sinyal', 'Coba gratis', 'Coba semua mode JPM gratis selama 24 jam. 1 server, 1 nomor.',
+         1, 0, 0, 0, CAST(strftime('%s','now') AS INTEGER) * 1000
+  WHERE NOT EXISTS (SELECT 1 FROM packages WHERE code = 'uji');
+  `,
 ];
 
 function migrasi() {
@@ -105,11 +231,37 @@ function migrasi() {
   }
 }
 
-/** Paket bawaan saat database masih kosong. Harga & durasi bisa diubah dari panel admin. */
+/**
+ * Paket bawaan saat database masih kosong (fresh install).
+ * Tiga tier bulanan: Antena (kecil) / Menara (sedang) / Satelit (besar).
+ * Harga & durasi bisa diubah dari panel admin. Untuk DB lama, MIGRASI[1] yang mengisi.
+ */
 const PAKET_AWAL = [
-  { name: 'Mingguan', description: '1 server, 1 nomor WhatsApp, semua fitur JPM.', days: 7, price: 5000 },
-  { name: 'Bulanan', description: '1 server, 1 nomor WhatsApp, semua fitur JPM.', days: 30, price: 15000 },
-  { name: '3 Bulan', description: 'Lebih hemat untuk pemakaian jangka panjang.', days: 90, price: 40000 },
+  {
+    code: 'antena',
+    name: 'Antena',
+    sizeLabel: 'Server Kecil',
+    description: 'Buat kamu yang baru mulai jasher. Semua mode JPM, jangkauan sampai 50 grup per putaran.',
+    days: 30,
+    price: 7000,
+  },
+  {
+    code: 'menara',
+    name: 'Menara',
+    sizeLabel: 'Server Sedang',
+    description: 'Untuk seller yang makin serius. Jangkauan sampai 200 grup per putaran dan 10 postingan tersimpan.',
+    days: 30,
+    price: 12000,
+  },
+  {
+    code: 'satelit',
+    name: 'Satelit',
+    sizeLabel: 'Server Besar',
+    description:
+      'Jangkauan penuh ke semua grup, 2 tugas otomatis sekaligus, dan 30 postingan tersimpan. Paling hemat per grup.',
+    days: 30,
+    price: 15000,
+  },
 ];
 
 export const PENGATURAN_SITUS_AWAL = {
@@ -119,6 +271,18 @@ export const PENGATURAN_SITUS_AWAL = {
   contact_whatsapp: '',
   min_topup: '5000',
   announcement: '',
+  // Pembayaran QRIS otomatis
+  qris_fee: String(env.qrisFeeAwal), // biaya admin flat (rupiah), per transaksi QRIS
+  qris_min_amount: '1000', // minimal subtotal per QRIS
+  manual_topup: '1', // '1' = top up manual tetap ditampilkan walau QRIS aktif
+  // Free trial (Uji Sinyal)
+  trial_enabled: '1', // '0' = matikan trial
+  trial_hours: '24', // lama trial, dihitung sejak nomor tersambung
+  trial_requirement: 'none', // 'none' | 'google' (wajib login Google untuk klaim)
+  trial_max_per_ip_30d: '2', // batas lunak klaim per IP dalam 30 hari
+  trial_max_per_device_30d: '1', // batas lunak klaim per perangkat dalam 30 hari
+  trial_pending_max: '20', // maksimal klaim pending (belum tersambung) se-situs
+  reg_max_per_ip_day: '5', // maksimal pendaftaran per IP per 24 jam
 };
 
 function benih() {
@@ -126,9 +290,9 @@ function benih() {
 
   if (db.prepare('SELECT COUNT(*) AS n FROM packages').get().n === 0) {
     const tambah = db.prepare(
-      'INSERT INTO packages (name, description, days, price, sort, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+      'INSERT INTO packages (code, name, size_label, description, days, price, sort, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
     );
-    PAKET_AWAL.forEach((p, i) => tambah.run(p.name, p.description, p.days, p.price, i, sekarang));
+    PAKET_AWAL.forEach((p, i) => tambah.run(p.code, p.name, p.sizeLabel, p.description, p.days, p.price, i + 1, sekarang));
   }
 
   const isi = db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)');

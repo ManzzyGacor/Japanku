@@ -26,6 +26,10 @@ const angka = (nilai, cadangan) => {
   const n = Number(nilai);
   return Number.isFinite(n) && n > 0 ? n : cadangan;
 };
+const angkaNol = (nilai, cadangan) => {
+  const n = Number(nilai);
+  return nilai !== undefined && nilai !== '' && Number.isInteger(n) && n >= 0 ? n : cadangan;
+};
 const ya = (nilai) => ['1', 'true', 'yes', 'ya', 'on'].includes(String(nilai ?? '').toLowerCase());
 
 export const env = {
@@ -51,4 +55,11 @@ export const env = {
     repo: process.env.GITHUB_REPO || '',
     branch: process.env.GITHUB_BRANCH || 'main',
   },
+  // Pembayaran QRIS otomatis (AutoGopay). API key hanya dari env, tidak pernah di kode.
+  autogopay: {
+    apiKey: process.env.AUTOGOPAY_API_KEY || '',
+    baseUrl: (process.env.AUTOGOPAY_BASE_URL || 'https://v1-gateway.autogopay.site').replace(/\/+$/, ''),
+    simulasi: ya(process.env.AUTOGOPAY_SIMULASI),
+  },
+  qrisFeeAwal: angkaNol(process.env.QRIS_FEE, 200),
 };
